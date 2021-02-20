@@ -7,7 +7,7 @@ function initSquareBuffer() {
     var verticesOfSquare = [
         0.5, 0.5, 0.0,
         -0.5, 0.5, 0.0,
-        0.5, -.05, 0.0,
+        0.5, -0.5, 0.0,
         -0.5,-0.5, 0.0
     ];
 
