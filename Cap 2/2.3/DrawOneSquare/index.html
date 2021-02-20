@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>2.3: The HTML5 Canvas Project</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <script type="x-shader/x-vertex" id="VertexShader">
+            attribute vec3 aSquareVertexPosition;
+            void main(void) {
+            gl_Position = vec4(aSquareVertexPosition, 1.0);
+            }
+           </script>
+        <script type="x-shader/x-fragment" id="FragmentShader">
+            void main(void) {
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            }
+        </script>
+   
+        <script type="text/javascript" src="src/WebGL.js"></script>
+        <script type="text/javascript" src="src/ShaderSupport.js"></script>
+        <script type="text/javascript" src="src/VertexBuffer.js"></script>
+    </head>
+    <body onload="doGLDraw();">
+        <canvas id="GLCanvas" width="640" height="480">
+            Your browser does not support the HTML5 canvas.
+        </canvas>
+       
+   
+        
+     
+    </body>
+</html>
