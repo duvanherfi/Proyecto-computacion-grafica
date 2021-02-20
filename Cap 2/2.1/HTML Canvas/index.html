@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>2.1: The HTML5 Canvas Project</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <canvas id="GlCanvas" width="640" height="480">
+            Your browser does not support the HTML5 canvas.
+        </canvas>
+        <script type="text/javascript">
+            // JavaScript code goes here.
+            var canvas = document.getElementById("GlCanvas");
+            var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+            if (gl !== null) {
+                gl.clearColor(0.0, 0.0, 0.8, 1.0); // set the color to be cleared
+                gl.clear(gl.COLOR_BUFFER_BIT); // clear the colors
+            }
+        </script>
+    </body>
+</html>
