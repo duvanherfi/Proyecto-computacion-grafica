@@ -47,6 +47,7 @@ function MyGame(htmlCanvasID) {
 
   // Step G: Draw the blue square
   // Centre Blue, slightly rotated square
+  //135°->2.3rad
   this.mBlueSq.getXform().setPosition(20, 60);
   this.mBlueSq.getXform().setRotationInRad(0.2); // In Radians
   this.mBlueSq.getXform().setSize(5, 5);
