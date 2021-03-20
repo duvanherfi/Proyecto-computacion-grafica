@@ -24,7 +24,7 @@ GameOver.prototype.initialize = function () {
     //<editor-fold desc="Create the fonts!">
     // this.mText = new FontRenderable("This is green text");
     this.mMsg = new FontRenderable("Game Over!");
-    this.mMsg.setColor([0, 0, 0, 1]);
+    this.mMsg.setColor([0, 0, 0, 1]); // red
     this.mMsg.getXform().setPosition(22, 32);
     this.mMsg.setTextHeight(10);
     //</editor-fold>
