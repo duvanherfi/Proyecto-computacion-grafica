@@ -1,11 +1,4 @@
-/* 
- * File: Camera_Xform.js
- * Defines the functions that supports camera to pixel space transforms (mainly for illumination support)
- */
 
-/*jslint node: true, vars: true, bitwise: true */
-/*global Camera, vec3*/
-/* find out more about jslint: http://www.jslint.com/help.html */
 "use strict";
 
 Camera.prototype.fakeZInPixelSpace = function (z) {

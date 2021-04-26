@@ -1,11 +1,4 @@
-/*
- * File: ShaderLightAtIndex.js 
- * support of loading light info to the glsl shader
- *      references are pointing to uLight[index]
- */
-/*jslint node: true, vars: true */
-/*global gEngine, vec3, vec4, Light */
-/* find out more about jslint: http://www.jslint.com/help.html */
+
 
 "use strict";  // Operate in Strict mode such that variables must be declared before used!
 
