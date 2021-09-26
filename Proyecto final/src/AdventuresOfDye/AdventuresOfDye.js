@@ -42,7 +42,7 @@ AdventuresOfDye.prototype.draw = function () {
     gEngine.Core.clearCanvas([0.9, 0.9, 0.9, 1.0]); // clear to light gray
     
     this.mCamera.setupViewProjection();
-    this.mMsg.setText("This is splash Screen");
+    this.mMsg.setText("Press enter for continue");
     this.mMsg.getXform().setPosition(10, 55);
     this.mMsg.draw(this.mCamera);
     this.mMsg.setText("<Space Bar> to Start");

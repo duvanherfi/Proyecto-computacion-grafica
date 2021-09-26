@@ -23,6 +23,9 @@ function GameLevel_01(level) {
     this.kButton = "assets/DoorFrame_Button_180x100.png";
     this.kProjectileTexture = "assets/EMPPulse.png";
 
+    //Text
+    this.Mmsg = null;
+
     // specifics to the level
     this.kLevelFile = "assets/" + level + "/" + level + ".xml";  // e.g., assets/Level1/Level1.xml
     this.kBg = "assets/" + level + "/bg.png";
@@ -37,8 +40,8 @@ function GameLevel_01(level) {
     this.mPeekCam = null;
     this.mShowPeek = false;
 
-    this.mMsg = null;
     this.mMatMsg = null;
+    this.rolex = 60;
 
     // the hero and the support objects
     this.mHero = null;
@@ -52,6 +55,7 @@ function GameLevel_01(level) {
 
     this.mLgtIndex = 2;
     this.mLgtRotateTheta = 0;
+
 
     this.mAllWalls = new GameObjectSet();
     this.mAllPlatforms = new GameObjectSet();
@@ -122,6 +126,9 @@ GameLevel_01.prototype.initialize = function () {
     gEngine.DefaultResources.setGlobalAmbientColor([1, 1, 1, 1]);
     gEngine.DefaultResources.setGlobalAmbientIntensity(0.2);
 
+
+
+
     // parse the entire scene
     var parser = new SceneFileParser(this.kLevelFile);
     this.mCamera = parser.parseCamera();
@@ -162,7 +169,12 @@ GameLevel_01.prototype.initialize = function () {
 
     this.mNextLevel = parser.parseNextLevel();
 
-
+    //Initialize text properties
+  
+        this.mMsg = new FontRenderable("status");
+        this.mMsg.setColor([1, 0, 0, 1]);
+        this.mMsg.getXform().setPosition(10, 16);
+        this.mMsg.setTextHeight(2);
     // Add hero into the layer manager and as shadow caster
     // Hero should be added into Actor layer last
     // Hero can only be added as shadow caster after background is created
@@ -182,19 +194,31 @@ GameLevel_01.prototype.initialize = function () {
 // This is the draw function, make sure to setup proper drawing environment, and more
 // importantly, make sure to _NOT_ change any state.
 GameLevel_01.prototype.draw = function () {
+ 
     // Step A: clear the canvas
     gEngine.Core.clearCanvas([0.9, 0.9, 0.9, 1.0]); // clear to light gray
 
     this.mCamera.setupViewProjection();
-    gEngine.LayerManager.drawAllLayers(this.mCamera);
 
+    gEngine.LayerManager.drawAllLayers(this.mCamera);
+    this.mMsg.draw(this.mCamera);
     this.mAllParticles.draw(this.mCamera);
 
     if (this.mShowPeek) {
         this.mPeekCam.setupViewProjection();
         gEngine.LayerManager.drawAllLayers(this.mPeekCam);
     }
+    
+ 
+  
 };
+
+
+    // for(var i=0; i<5; i++){
+    //     this.mMsg.setText(i);
+     
+    // }
+
 
 // The Update function, updates the application state. Make sure to _NOT_ draw
 // anything from this function!
@@ -202,6 +226,10 @@ GameLevel_01.prototype.update = function () {
     this.mCamera.update();  // to ensure proper interpolated movement effects
 
     gEngine.LayerManager.updateAllLayers();
+
+   
+    this.mMsg.getText();
+  
 
     var xf = this.mIllumHero.getXform();
     this.mCamera.setWCCenter(xf.getXPos(), 8);
