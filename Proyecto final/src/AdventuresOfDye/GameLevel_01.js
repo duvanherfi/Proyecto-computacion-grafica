@@ -22,6 +22,7 @@ function GameLevel_01(level) {
     this.kDoorSleeve = "assets/DoorFrame_AnimSheet.png";
     this.kButton = "assets/DoorFrame_Button_180x100.png";
     this.kProjectileTexture = "assets/EMPPulse.png";
+    this.kimpact = "assets/particle.png";
 
     // specifics to the level
     this.kLevelFile = "assets/" + level + "/" + level + ".xml";  // e.g., assets/Level1/Level1.xml
@@ -49,6 +50,7 @@ function GameLevel_01(level) {
     this.mThisLevel = level;
     this.mNextLevel = null;
     this.mRestart = false;
+    this.mImpact = false;
 
     this.mLgtIndex = 2;
     this.mLgtRotateTheta = 0;
@@ -81,6 +83,7 @@ GameLevel_01.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kBgNormal);
     gEngine.Textures.loadTexture(this.kBgLayer);
     gEngine.Textures.loadTexture(this.kBgLayerNormal);
+    gEngine.Textures.loadTexture(this.kimpact);
 };
 
 GameLevel_01.prototype.unloadScene = function () {
@@ -104,6 +107,7 @@ GameLevel_01.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kBgNormal);
     gEngine.Textures.unloadTexture(this.kBgLayer);
     gEngine.Textures.unloadTexture(this.kBgLayerNormal);
+    gEngine.Textures.unloadTexture(this.kimpact);
 
     if (this.mRestart === true)
     {
@@ -245,6 +249,7 @@ GameLevel_01.prototype.update = function () {
             gEngine.GameLoop.stop();
         }
     }
+    this.mAllParticles.update();
 
     var j;
     for (i = 0; i < this.mAllMinions.size(); i++) {
@@ -254,10 +259,17 @@ GameLevel_01.prototype.update = function () {
             var pBox = p.getObjectAt(j).getPhysicsComponent();
             collided = this.mIllumHero.getPhysicsComponent().collided(pBox, collisionInfo);
             if (collided) {
-                this.mRestart = true;
-                gEngine.GameLoop.stop();
+                let x = this.mIllumHero.getXform().getXPos();
+                let y = this.mIllumHero.getXform().getYPos();
+                this.mAllParticles.addEmitterAt([x,y], 2, this.createParticle);
+                this.mImpact = true;
             }
         }
+    }
+
+    if (this.mImpact && this.mAllParticles.mEmitterSet.length == 0){                    
+        this.mRestart = true;
+        gEngine.GameLoop.stop();
     }
 
     for (i = 0; i < this.mAllButtons.size(); i++) {
@@ -303,3 +315,28 @@ GameLevel_01.prototype._physicsSimulation = function () {
 
 };
 
+GameLevel_01.prototype.createParticle = function(atX, atY) {
+    var life = 30 + Math.random() * 200;
+    var p = new ParticleGameObject("assets/particle.png", atX, atY, life);
+    p.getRenderable().setColor([1, 0, 0, 1]);
+    
+    // size of the particle
+    var r = 3.5 + Math.random() * 2.5;
+    p.getXform().setSize(r, r);
+    
+    // final color
+    var fr = 3.5 + Math.random();
+    var fg = 0.4 + 0.1 * Math.random();
+    var fb = 0.3 + 0.1 * Math.random();
+    p.setFinalColor([fr, fg, fb, 0.6]);
+    
+    // velocity on the particle
+    var fx = 10 * Math.random() - 20 * Math.random();
+    var fy = 10 * Math.random();
+    p.getPhysicsComponent().setVelocity([fx, fy]);
+    
+    // size delta
+    p.setSizeDelta(0.98);
+    
+    return p;
+};
