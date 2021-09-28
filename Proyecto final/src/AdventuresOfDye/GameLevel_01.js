@@ -42,7 +42,6 @@ function GameLevel_01(level) {
     this.mShowPeek = false;
 
     this.mMatMsg = null;
-    this.rolex = 60;
 
     // the hero and the support objects
     this.mHero = null;
@@ -175,13 +174,15 @@ GameLevel_01.prototype.initialize = function () {
 
     //Initialize text properties
   
-        this.mMsg = new FontRenderable("status");
+        this.mMsg = new FontRenderable("60");
         this.mMsg.setColor([1, 0, 0, 1]);
         this.mMsg.getXform().setPosition(10, 16);
         this.mMsg.setTextHeight(2);
     // Add hero into the layer manager and as shadow caster
     // Hero should be added into Actor layer last
     // Hero can only be added as shadow caster after background is created
+    // gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg)
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg)
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumHero);
     gEngine.LayerManager.addAsShadowCaster(this.mIllumHero);
 
@@ -218,24 +219,38 @@ GameLevel_01.prototype.draw = function () {
 };
 
 
-    // for(var i=0; i<5; i++){
-    //     this.mMsg.setText(i);
-     
-    // }
-
+  
 
 // The Update function, updates the application state. Make sure to _NOT_ draw
 // anything from this function!
 GameLevel_01.prototype.update = function () {
+ 
     this.mCamera.update();  // to ensure proper interpolated movement effects
 
     gEngine.LayerManager.updateAllLayers();
-
+    
+ 
+//Implment about the timer (left function implement)
+   var ms = this.mMsg;
+   var v = parseInt( ms.getText() ,10);
+   if(v==0){ 
+       v=60;
+       this.mRestart = true;
+       gEngine.GameLoop.stop();
+    }else{
+        setTimeout(function(){ 
+             v = v -1;
+            ms.setText( String(v)); }, 1000);
+        
+           
+    }
    
-    this.mMsg.getText();
-  
-
+    
+        
     var xf = this.mIllumHero.getXform();
+    var xpos = this.mIllumHero.getXform().getXPos()
+    this.mMsg.getXform().setPosition(xpos,16);
+    
     this.mCamera.setWCCenter(xf.getXPos(), 8);
     var p = vec2.clone(xf.getPosition());
     //p[0] -= 8;
