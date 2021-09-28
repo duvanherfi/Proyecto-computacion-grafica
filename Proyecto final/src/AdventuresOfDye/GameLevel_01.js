@@ -23,6 +23,7 @@ function GameLevel_01(level) {
     this.kButton = "assets/DoorFrame_Button_180x100.png";
     this.kProjectileTexture = "assets/EMPPulse.png";
     this.kimpact = "assets/particle.png";
+    this.kCue = "assets/sounds/BGClip.mp3";
 
     //Text
     this.Mmsg = null;
@@ -87,6 +88,7 @@ GameLevel_01.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kBgLayer);
     gEngine.Textures.loadTexture(this.kBgLayerNormal);
     gEngine.Textures.loadTexture(this.kimpact);
+    gEngine.AudioClips.loadAudio(this.kCue);
 };
 
 GameLevel_01.prototype.unloadScene = function () {
@@ -111,6 +113,7 @@ GameLevel_01.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kBgLayer);
     gEngine.Textures.unloadTexture(this.kBgLayerNormal);
     gEngine.Textures.unloadTexture(this.kimpact);
+    gEngine.AudioClips.unloadAudio(this.kCue);
 
     if (this.mRestart === true)
     {
@@ -185,7 +188,7 @@ GameLevel_01.prototype.initialize = function () {
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg)
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumHero);
     gEngine.LayerManager.addAsShadowCaster(this.mIllumHero);
-
+    gEngine.AudioClips.playBackgroundAudio(this.kCue);
 
     this.mPeekCam = new Camera(
             vec2.fromValues(0, 0),
