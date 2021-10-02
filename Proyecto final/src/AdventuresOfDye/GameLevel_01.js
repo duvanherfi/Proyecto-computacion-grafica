@@ -243,9 +243,11 @@ GameLevel_01.prototype.update = function () {
     }else{
         setTimeout(function(){ 
              v = v -1;
-            ms.setText( String(v)); }, 1000);
-        
-           
+            ms.setText( String(v));            
+        }, 1000);           
+    }
+    if(v % 2 == 0){ 
+        this.mCamera.shake(-2, -2, 20, 30);
     }
    
     
