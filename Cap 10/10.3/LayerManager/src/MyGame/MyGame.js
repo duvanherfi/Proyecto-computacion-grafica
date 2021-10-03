@@ -77,7 +77,7 @@ MyGame.prototype.initialize = function () {
         100,                       // width of camera
         [0, 0, 1280, 720]           // viewport (orgX, orgY, width, height)
     );
-    this.mCamera.setBackgroundColor([0.8, 0.8, 0.8, 1]);
+    this.mCamera.setBackgroundColor([0.8, 0.8, 0, 1]);
             // sets the background to gray
     
     // Step B: the lights
@@ -115,7 +115,7 @@ MyGame.prototype.initialize = function () {
     var f = new TextureRenderable(this.kBgLayer);
     f.getXform().setSize(30, 30);
     f.getXform().setPosition(0, 0);
-    this.mFront = new ParallaxGameObject(f, 0.9, this.mCamera);
+    this.mFront = new ParallaxGameObject(f, 1, this.mCamera);
     
     // 
     // the objects
@@ -159,17 +159,20 @@ MyGame.prototype.initialize = function () {
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eBackground, this.mBg);
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eShadowReceiver, this.mBgShadow1);
     
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumMinion);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mLgtMinion);
+    //Change the order
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumHero);
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mLgtHero);
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumMinion);
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mLgtMinion);
+   
     
+    
+   
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mBlock1);
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mBlock2);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mFront);
     
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMatMsg);
+  
+
 };
 
 // This is the draw function, make sure to setup proper drawing environment, and more
@@ -180,7 +183,7 @@ MyGame.prototype.draw = function () {
 
     this.mCamera.setupViewProjection();
     gEngine.LayerManager.drawAllLayers(this.mCamera);
-
+    this.mMsg.draw(this.mCamera);
     if (this.mShowHeroCam) {
         this.mParallaxCam.setupViewProjection();
         gEngine.LayerManager.drawAllLayers(this.mParallaxCam);
@@ -196,6 +199,7 @@ MyGame.prototype.update = function () {
     gEngine.LayerManager.updateAllLayers();
 
     var xf = this.mLgtHero.getXform();
+    if(xf ==)
     this.mCamera.panWith(xf, 0.2);
     this.mGlobalLightSet.getLightAt(3).set2DPosition(xf.getPosition());
     

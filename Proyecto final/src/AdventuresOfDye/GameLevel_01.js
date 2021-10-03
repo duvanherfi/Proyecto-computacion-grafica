@@ -258,16 +258,13 @@ GameLevel_01.prototype.update = function () {
     }else{
         setTimeout(function(){ 
              v = v -1;
-<<<<<<< HEAD
+
             ms.setText( String(v)); }, 1000);
-          
-=======
-            ms.setText( String(v));            
-        }, 1000);           
+      
     }
     if(v % 2 == 0){ 
         this.mCamera.shake(-2, -2, 20, 30);
->>>>>>> d9aa36724ff7399a49b86f5d0438c9512e624bea
+
     }
 
     var xf = this.mIllumHero.getXform();
