@@ -59,7 +59,11 @@
     <!-- Buttons -->
     <Button PosX="0" PosY="11.5" Type="0"/>
     <Button PosX="25" PosY="13.5" Type="0"/>
-    <Button PosX="60" PosY="8.5" Type="0"/>
+    <!-- <Button PosX="60" PosY="8.5" Type="0"/>  -->
+
+    <!-- Shield -->
+    <Shield PosX="60" PosY="9" />
+   
     
      <!-- Minions -->
      <!-- minion type: 0=>shooter, 1->brain, 2=>beetle -->

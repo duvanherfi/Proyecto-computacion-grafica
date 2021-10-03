@@ -232,6 +232,25 @@ SceneFileParser.prototype.parseButtons = function (texture, lightSet) {
     return allButtons;
 };
 
+SceneFileParser.prototype.parseShields = function (texture, lightSet) {
+    var elm = this._getElm("Shield");
+    var i, x, y, s;
+    var allShields = [];
+    for (i = 0; i < elm.length; i++) {
+        x = Number(elm.item(i).attributes.getNamedItem("PosX").value);
+        y = Number(elm.item(i).attributes.getNamedItem("PosY").value);
+
+        s = new Shield(x, y,  texture, lightSet);
+        gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, s);
+        gEngine.LayerManager.addAsShadowCaster(s);
+
+        allShields.push(s);
+    }
+
+    return allShields;
+};
+
+
 SceneFileParser.prototype.parseBackground = function (level, refCam, lightSet) {
     var elm = this._getElm("Background");
     var dir = "assets/" + level + "/";

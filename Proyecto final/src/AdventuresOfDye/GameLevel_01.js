@@ -24,9 +24,11 @@ function GameLevel_01(level) {
     this.kProjectileTexture = "assets/EMPPulse.png";
     this.kimpact = "assets/particle.png";
     this.kCue = "assets/sounds/BGClip.mp3";
+    this.kShield = "assets/escudo.png";
 
     //Text
     this.Mmsg = null;
+      
 
     // specifics to the level
     this.kLevelFile = "assets/" + level + "/" + level + ".xml";  // e.g., assets/Level1/Level1.xml
@@ -64,6 +66,7 @@ function GameLevel_01(level) {
     this.mAllButtons = new GameObjectSet();
     this.mAllDoors = new GameObjectSet();
     this.mAllMinions = new GameObjectSet();
+    this.mAllShields = new GameObjectSet();
     this.mAllParticles = new ParticleGameObjectSet();
 }
 gEngine.Core.inheritPrototype(GameLevel_01, Scene);
@@ -82,6 +85,7 @@ GameLevel_01.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kDoorSleeve);
     gEngine.Textures.loadTexture(this.kButton);
     gEngine.Textures.loadTexture(this.kProjectileTexture);
+    gEngine.Textures.loadTexture(this.kShield);
 
     gEngine.Textures.loadTexture(this.kBg);
     gEngine.Textures.loadTexture(this.kBgNormal);
@@ -107,6 +111,7 @@ GameLevel_01.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kDoorSleeve);
     gEngine.Textures.unloadTexture(this.kButton);
     gEngine.Textures.unloadTexture(this.kProjectileTexture);
+    gEngine.Textures.unloadTexture(this.kShield);
 
     gEngine.Textures.unloadTexture(this.kBg);
     gEngine.Textures.unloadTexture(this.kBgNormal);
@@ -173,6 +178,9 @@ GameLevel_01.prototype.initialize = function () {
     // for now here is the hero
     this.mIllumHero = new Hero(this.kHeroSprite, null, 2, 6, this.mGlobalLightSet);
 
+
+  
+
     this.mNextLevel = parser.parseNextLevel();
 
     //Initialize text properties
@@ -186,9 +194,16 @@ GameLevel_01.prototype.initialize = function () {
     // Hero can only be added as shadow caster after background is created
     // gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg)
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg)
+
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumHero);
     gEngine.LayerManager.addAsShadowCaster(this.mIllumHero);
-    gEngine.AudioClips.playBackgroundAudio(this.kCue);
+    
+    var s = parser.parseShields(this.kShield, this.mGlobalLightSet);
+    for (i = 0; i < s.length; i++) {
+        this.mAllShields.addToSet(s[i]);
+    }
+ 
+    // gEngine.AudioClips.playBackgroundAudio(this.kCue);
 
     this.mPeekCam = new Camera(
             vec2.fromValues(0, 0),
@@ -244,14 +259,12 @@ GameLevel_01.prototype.update = function () {
         setTimeout(function(){ 
              v = v -1;
             ms.setText( String(v)); }, 1000);
-        
-           
+          
     }
-   
-    
-        
+
     var xf = this.mIllumHero.getXform();
-    var xpos = this.mIllumHero.getXform().getXPos()
+    var xpos = this.mIllumHero.getXform().getXPos();
+    var ypos = this.mIllumHero.getXform().getYPos();
     this.mMsg.getXform().setPosition(xpos,16);
     
     this.mCamera.setWCCenter(xf.getXPos(), 8);
@@ -297,18 +310,38 @@ GameLevel_01.prototype.update = function () {
     }
     this.mAllParticles.update();
 
+    // Get shield
+    var getShield;
+    var ShieldBox = this.mAllShields.getObjectAt(0).getPhysicsComponent();
+    collided = this.mIllumHero.getPhysicsComponent().collided(ShieldBox, collisionInfo);
+    if(collided){
+             getShield=true;
+            this.mAllShields.getObjectAt(0).getXform().setPosition(xpos-0.3, ypos);
+        }else{
+            getShield = false;
+        }
+
     var j;
     for (i = 0; i < this.mAllMinions.size(); i++) {
         var p = this.mAllMinions.getObjectAt(i).getProjectiles();
+   
 
         for (j = 0; j < p.size(); j++) {
             var pBox = p.getObjectAt(j).getPhysicsComponent();
             collided = this.mIllumHero.getPhysicsComponent().collided(pBox, collisionInfo);
             if (collided) {
+                if(getShield){
+                    let x = this.mIllumHero.getXform().getXPos();
+                    let y = this.mIllumHero.getXform().getYPos();
+                    this.mAllParticles.addEmitterAt([x,y],1, this.createParticle);
+                    p.getObjectAt(j).setSizeDelta(0);
+                    this.mImpact = false;
+                }else{
                 let x = this.mIllumHero.getXform().getXPos();
                 let y = this.mIllumHero.getXform().getYPos();
                 this.mAllParticles.addEmitterAt([x,y], 2, this.createParticle);
                 this.mImpact = true;
+                }
             }
         }
     }
@@ -318,11 +351,37 @@ GameLevel_01.prototype.update = function () {
         gEngine.GameLoop.stop();
     }
 
+    //Upgrade related to the slow of projectiles
+    if(this.mAllButtons.getObjectAt(0).getButtonState()){ 
+        // Become slow proyectil mode
+         for(var i=0; i<this.mAllMinions.size(); i++){
+             var p1 = this.mAllMinions.getObjectAt(i).getProjectiles();
+                 for(var j=0; j<p1.size(); j ++){
+                      p1.getObjectAt(j).setSpeed(0.2)
+                 }
+             }
+             
+           }else{
+            for(var i=0; i<this.mAllMinions.size(); i++){
+                var p1 = this.mAllMinions.getObjectAt(i).getProjectiles();
+                    for(var j=0; j<p1.size(); j ++){
+                         p1.getObjectAt(j).setSpeed(0.5)
+                    }
+                }
+           }
+
+
+    
+    
+
+
+
     for (i = 0; i < this.mAllButtons.size(); i++) {
         var buttonBox = this.mAllButtons.getObjectAt(i).getPhysicsComponent();
         collided = this.mIllumHero.getPhysicsComponent().collided(buttonBox, collisionInfo);
         if (collided) {
-            this.mAllButtons.getObjectAt(i).pressButton();
+           this.mAllButtons.getObjectAt(i).pressButton();
+         
         }
     }
 
