@@ -28,8 +28,6 @@ function Door(cx, cy, texture0, texture1, texture2, lightSet) {
 
     var rigidShape = new RigidRectangle(this.getXform(), this.kWidth, this.kHeight * 2);
     rigidShape.setMass(0);  // ensures no movements!
-    rigidShape.setDrawBounds(true);
-    rigidShape.setColor([0, 0, 1, 1]);
     this.setPhysicsComponent(rigidShape);
 }
 gEngine.Core.inheritPrototype(Door, GameObject);

@@ -65,8 +65,6 @@ function Boss(atX, atY, velocity, movementRange, type, texture0, texture1, textu
 
     var rigidShape = new RigidRectangle(this.getXform(), this.kWidth, this.kHeight);
     rigidShape.setMass(0);
-    rigidShape.setDrawBounds(true);
-    rigidShape.setColor([0, 0, 1, 1]);
     //rigidShape.setAcceleration([0, 0]);
     this.setPhysicsComponent(rigidShape);
 }

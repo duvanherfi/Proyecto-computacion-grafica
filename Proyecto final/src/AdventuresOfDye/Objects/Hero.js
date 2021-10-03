@@ -12,9 +12,10 @@
 "use strict";  // Operate in Strict mode such that variables must be declared before used!
 
 function Hero(spriteTexture, normalMap, atX, atY, lgtSet) {
-    this.kDelta = 0.1;
+    this.kDelta = 0.08;
     this.kWidth = 2;
     this.kHeight = 8 / 3;
+    this.OpenDoor = false;
 
     if (normalMap !== null) {
         this.mDye = new IllumRenderable(spriteTexture, normalMap);
@@ -43,17 +44,13 @@ function Hero(spriteTexture, normalMap, atX, atY, lgtSet) {
     var transform = new Transform();
     transform.setPosition(this.mDye.getXform().getXPos(), this.mDye.getXform().getYPos() - this.kHeight / 2);
     this.mJumpBox = new RigidRectangle(transform, this.kWidth, 0.25);
-    this.mJumpBox.setColor([0, 0, 1, 1]);
-    this.mJumpBox.setDrawBounds(true);
-    //this.setPhysicsComponent(this.mJumpBox);
+    this.setPhysicsComponent(this.mJumpBox);
 
     GameObject.call(this, this.mDye);
 
     var r = new RigidRectangle(this.getXform(), this.kWidth / 1.9, this.kHeight / 1.1);
     r.setMass(0.7);
     r.setRestitution(0);
-    r.setColor([0, 1, 0, 1]);
-    r.setDrawBounds(true);
     //r.setAcceleration(-5);
     this.setPhysicsComponent(r);
 
@@ -178,6 +175,14 @@ Hero.prototype.canJump = function (b) {
 Hero.prototype.getJumpBox = function () {
     return this.mJumpBox;
 };
+
+Hero.prototype.canOpenDoor = function (){
+    return this.OpenDoor;
+}
+
+Hero.prototype.setCanOpenDoor = function (b){
+    this.OpenDoor = b;
+}
 
 
 

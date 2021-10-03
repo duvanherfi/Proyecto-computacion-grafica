@@ -17,8 +17,6 @@ function Shield(cx, cy, texture, lightSet) {
 
     var rigidShape = new RigidRectangle(this.getXform(), this.kWidth, this.kHeight);
     rigidShape.setMass(0);  // ensures no movements!
-    rigidShape.setDrawBounds(true);
-    rigidShape.setColor([1, 1, 1, 1]);
     this.setPhysicsComponent(rigidShape);
 }
 gEngine.Core.inheritPrototype(Shield, GameObject);

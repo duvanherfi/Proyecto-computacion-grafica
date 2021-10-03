@@ -1,13 +1,13 @@
 /*
- * File: GameLevel_01.js 
- * This is the logic of our game. 
+ * File: GameLevel_01.js
+ * This is the logic of our game.
  */
 
 /*jslint node: true, vars: true, white: true */
 /*global gEngine, Scene, Hero, Camera, SceneFileParser, FontRenderable, vec2 */
 /* find out more about jslint: http://www.jslint.com/help.html */
 
-"use strict";  // Operate in Strict mode such that variables must be declared before used!
+"use strict"; // Operate in Strict mode such that variables must be declared before used!
 
 function GameLevel_01(level) {
     this.kHeroSprite = "assets/hero_sprite.png";
@@ -25,20 +25,20 @@ function GameLevel_01(level) {
     this.kimpact = "assets/particle.png";
     this.kCue = "assets/sounds/BGClip.mp3";
     this.kShield = "assets/escudo.png";
+    this.kKey = "assets/key.png";
 
     //Text
     this.Mmsg = null;
-      
 
     // specifics to the level
-    this.kLevelFile = "assets/" + level + "/" + level + ".xml";  // e.g., assets/Level1/Level1.xml
+    this.kLevelFile = "assets/" + level + "/" + level + ".xml"; // e.g., assets/Level1/Level1.xml
     this.kBg = "assets/" + level + "/bg.png";
     this.kBgNormal = "assets/" + level + "/bg_normal.png";
     this.kBgLayer = "assets/" + level + "/bgLayer.png";
     this.kBgLayerNormal = "assets/" + level + "/bgLayer_normal.png";
 
     this.kLevelFinishedPosition = 65;
-    
+
     // The camera to view the scene
     this.mCamera = null;
     this.mPeekCam = null;
@@ -49,6 +49,8 @@ function GameLevel_01(level) {
     // the hero and the support objects
     this.mHero = null;
     this.mIllumHero = null;
+    this.mPowerUp = null;
+    this.mKey = null;
 
     this.mGlobalLightSet = null;
 
@@ -60,10 +62,8 @@ function GameLevel_01(level) {
     this.mLgtIndex = 2;
     this.mLgtRotateTheta = 0;
 
-
     this.mAllWalls = new GameObjectSet();
     this.mAllPlatforms = new GameObjectSet();
-    this.mAllButtons = new GameObjectSet();
     this.mAllDoors = new GameObjectSet();
     this.mAllMinions = new GameObjectSet();
     this.mAllShields = new GameObjectSet();
@@ -72,7 +72,10 @@ function GameLevel_01(level) {
 gEngine.Core.inheritPrototype(GameLevel_01, Scene);
 
 GameLevel_01.prototype.loadScene = function () {
-    gEngine.TextFileLoader.loadTextFile(this.kLevelFile, gEngine.TextFileLoader.eTextFileType.eXMLFile);
+    gEngine.TextFileLoader.loadTextFile(
+        this.kLevelFile,
+        gEngine.TextFileLoader.eTextFileType.eXMLFile
+    );
     gEngine.Textures.loadTexture(this.kHeroSprite);
     gEngine.Textures.loadTexture(this.kMinionSprite);
     gEngine.Textures.loadTexture(this.kPlatform);
@@ -86,6 +89,7 @@ GameLevel_01.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kButton);
     gEngine.Textures.loadTexture(this.kProjectileTexture);
     gEngine.Textures.loadTexture(this.kShield);
+    gEngine.Textures.loadTexture(this.kKey);
 
     gEngine.Textures.loadTexture(this.kBg);
     gEngine.Textures.loadTexture(this.kBgNormal);
@@ -112,6 +116,7 @@ GameLevel_01.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kButton);
     gEngine.Textures.unloadTexture(this.kProjectileTexture);
     gEngine.Textures.unloadTexture(this.kShield);
+    gEngine.Textures.unloadTexture(this.kKey);
 
     gEngine.Textures.unloadTexture(this.kBg);
     gEngine.Textures.unloadTexture(this.kBgNormal);
@@ -120,25 +125,19 @@ GameLevel_01.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kimpact);
     gEngine.AudioClips.unloadAudio(this.kCue);
 
-    if (this.mRestart === true)
-    {
-        var nextLevel = new GameLevel_01("Level1");  // next level to be loaded
+    if (this.mRestart === true) {
+        var nextLevel = new GameLevel_01("Level1"); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     } else {
-        var nextLevel = new GameLevel_02(this.mNextLevel);  // next level to be loaded
+        var nextLevel = new GameLevel_02(this.mNextLevel); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     }
-
-
 };
 
 GameLevel_01.prototype.initialize = function () {
     // set ambient lighting
     gEngine.DefaultResources.setGlobalAmbientColor([1, 1, 1, 1]);
     gEngine.DefaultResources.setGlobalAmbientIntensity(0.2);
-
-
-
 
     // parse the entire scene
     var parser = new SceneFileParser(this.kLevelFile);
@@ -158,66 +157,73 @@ GameLevel_01.prototype.initialize = function () {
         this.mAllWalls.addToSet(w[i]);
     }
 
-    var p = parser.parsePlatform(this.kPlatform, this.kPlatformNormal, this.mGlobalLightSet);
+    var p = parser.parsePlatform(
+        this.kPlatform,
+        this.kPlatformNormal,
+        this.mGlobalLightSet
+    );
     for (i = 0; i < p.length; i++) {
         this.mAllPlatforms.addToSet(p[i]);
     }
 
-    var d = parser.parseDoors(this.kDoorTop, this.kDoorBot, this.kDoorSleeve, this.mGlobalLightSet);
+    var d = parser.parseDoors(
+        this.kDoorTop,
+        this.kDoorBot,
+        this.kDoorSleeve,
+        this.mGlobalLightSet
+    );
     for (i = 0; i < d.length; i++) {
         this.mAllDoors.addToSet(d[i]);
     }
 
-    var b = parser.parseButtons(this.kButton, this.mGlobalLightSet);
-    for (i = 0; i < b.length; i++) {
-        this.mAllButtons.addToSet(b[i]);
-    }
-
+    this.mPowerUp = new Button(0, 12, this.kButton, 0, this.mGlobalLightSet);
+    this.mKey = new Key(25, 14, this.kKey, this.mGlobalLightSet);
     // parsing of actors can only begin after background has been parsed
     // to ensure proper support shadow
     // for now here is the hero
-    this.mIllumHero = new Hero(this.kHeroSprite, null, 2, 6, this.mGlobalLightSet);
-
-
-  
+    this.mIllumHero = new Hero(
+        this.kHeroSprite,
+        null,
+        2,
+        6,
+        this.mGlobalLightSet
+    );
 
     this.mNextLevel = parser.parseNextLevel();
 
     //Initialize text properties
-  
-        this.mMsg = new FontRenderable("60");
-        this.mMsg.setColor([1, 0, 0, 1]);
-        this.mMsg.getXform().setPosition(10, 16);
-        this.mMsg.setTextHeight(2);
+
+    this.mMsg = new FontRenderable("60");
+    this.mMsg.setColor([1, 0, 0, 1]);
+    this.mMsg.getXform().setPosition(10, 16);
+    this.mMsg.setTextHeight(2);
     // Add hero into the layer manager and as shadow caster
     // Hero should be added into Actor layer last
     // Hero can only be added as shadow caster after background is created
     // gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg)
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg)
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg);
 
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumHero);
     gEngine.LayerManager.addAsShadowCaster(this.mIllumHero);
-    
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mKey);
+    gEngine.LayerManager.addAsShadowCaster(this.mKey);
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mPowerUp);
+    gEngine.LayerManager.addAsShadowCaster(this.mPowerUp);
+
     var s = parser.parseShields(this.kShield, this.mGlobalLightSet);
     for (i = 0; i < s.length; i++) {
         this.mAllShields.addToSet(s[i]);
     }
- 
+
     // gEngine.AudioClips.playBackgroundAudio(this.kCue);
 
-    this.mPeekCam = new Camera(
-            vec2.fromValues(0, 0),
-            64,
-            [0, 0, 320, 180],
-            2
-            );
+    this.mPeekCam = new Camera(vec2.fromValues(0, 0), 64, [0, 0, 320, 180], 2);
     this.mShowPeek = false;
 };
 
 // This is the draw function, make sure to setup proper drawing environment, and more
 // importantly, make sure to _NOT_ change any state.
 GameLevel_01.prototype.draw = function () {
- 
     // Step A: clear the canvas
     gEngine.Core.clearCanvas([0.9, 0.9, 0.9, 1.0]); // clear to light gray
 
@@ -231,52 +237,45 @@ GameLevel_01.prototype.draw = function () {
         this.mPeekCam.setupViewProjection();
         gEngine.LayerManager.drawAllLayers(this.mPeekCam);
     }
-    
- 
-  
 };
-
-
-  
 
 // The Update function, updates the application state. Make sure to _NOT_ draw
 // anything from this function!
 GameLevel_01.prototype.update = function () {
- 
-    this.mCamera.update();  // to ensure proper interpolated movement effects
+    this.mCamera.update(); // to ensure proper interpolated movement effects
 
     gEngine.LayerManager.updateAllLayers();
-    
- 
-//Implment about the timer (left function implement)
-   var ms = this.mMsg;
-   var v = parseInt( ms.getText() ,10);
-   if(v==0){ 
-       v=60;
-       this.mRestart = true;
-       gEngine.GameLoop.stop();
-    }else{
-        setTimeout(function(){ 
-             v = v -1;
 
-            ms.setText( String(v)); }, 1000);
-      
+    //Implment about the timer (left function implement)
+    var ms = this.mMsg;
+    var v = parseInt(ms.getText(), 10);
+    if (v == 0) {
+        v = 60;
+        this.mRestart = true;
+        gEngine.GameLoop.stop();
+    } else {
+        setTimeout(function () {
+            v = v - 1;
+            ms.setText(String(v));
+        }, 1000);
     }
-    if(v % 2 == 0){ 
+    if (v % 5 == 0) {
         this.mCamera.shake(-2, -2, 20, 30);
-
     }
 
     var xf = this.mIllumHero.getXform();
     var xpos = this.mIllumHero.getXform().getXPos();
     var ypos = this.mIllumHero.getXform().getYPos();
-    this.mMsg.getXform().setPosition(xpos,16);
-    
+    if (ypos < 0){
+        this.mRestart = true;
+        gEngine.GameLoop.stop();
+    }
+    this.mMsg.getXform().setPosition(xpos, 16);
+
     this.mCamera.setWCCenter(xf.getXPos(), 8);
     var p = vec2.clone(xf.getPosition());
     //p[0] -= 8;
     this.mGlobalLightSet.getLightAt(this.mLgtIndex).set2DPosition(p);
-
 
     if (this.mShowPeek) {
         this.mPeekCam.setWCCenter(p[0], p[1]);
@@ -307,7 +306,9 @@ GameLevel_01.prototype.update = function () {
 
     for (i = 0; i < this.mAllMinions.size(); i++) {
         var minionBox = this.mAllMinions.getObjectAt(i).getPhysicsComponent();
-        collided = this.mIllumHero.getPhysicsComponent().collided(minionBox, collisionInfo);
+        collided = this.mIllumHero
+            .getPhysicsComponent()
+            .collided(minionBox, collisionInfo);
         if (collided) {
             this.mRestart = true;
             gEngine.GameLoop.stop();
@@ -318,135 +319,120 @@ GameLevel_01.prototype.update = function () {
     // Get shield
     var getShield;
     var ShieldBox = this.mAllShields.getObjectAt(0).getPhysicsComponent();
-    collided = this.mIllumHero.getPhysicsComponent().collided(ShieldBox, collisionInfo);
-    if(collided){
-             getShield=true;
-            this.mAllShields.getObjectAt(0).getXform().setPosition(xpos-0.3, ypos);
-        }else{
-            getShield = false;
-        }
+    collided = this.mIllumHero
+        .getPhysicsComponent()
+        .collided(ShieldBox, collisionInfo);
+    if (collided) {
+        getShield = true;
+        this.mAllShields
+            .getObjectAt(0)
+            .getXform()
+            .setPosition(xpos - 0.3, ypos);
+    } else {
+        getShield = false;
+    }
 
     var j;
     for (i = 0; i < this.mAllMinions.size(); i++) {
         var p = this.mAllMinions.getObjectAt(i).getProjectiles();
-   
 
         for (j = 0; j < p.size(); j++) {
             var pBox = p.getObjectAt(j).getPhysicsComponent();
-            collided = this.mIllumHero.getPhysicsComponent().collided(pBox, collisionInfo);
+            collided = this.mIllumHero
+                .getPhysicsComponent()
+                .collided(pBox, collisionInfo);
             if (collided) {
-                if(getShield){
+                if (getShield) {
                     let x = this.mIllumHero.getXform().getXPos();
                     let y = this.mIllumHero.getXform().getYPos();
-                    this.mAllParticles.addEmitterAt([x,y],1, this.createParticle);
+                    this.mAllParticles.addEmitterAt([x, y], 1, this.createParticle);
                     p.getObjectAt(j).setSizeDelta(0);
                     this.mImpact = false;
-                }else{
-                let x = this.mIllumHero.getXform().getXPos();
-                let y = this.mIllumHero.getXform().getYPos();
-                this.mAllParticles.addEmitterAt([x,y], 2, this.createParticle);
-                this.mImpact = true;
+                } else {
+                    let x = this.mIllumHero.getXform().getXPos();
+                    let y = this.mIllumHero.getXform().getYPos();
+                    this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
+                    this.mImpact = true;
                 }
             }
         }
     }
 
-    if (this.mImpact && this.mAllParticles.mEmitterSet.length == 0){                    
+    if (this.mImpact && this.mAllParticles.mEmitterSet.length == 0) {
         this.mRestart = true;
         gEngine.GameLoop.stop();
     }
 
     //Upgrade related to the slow of projectiles
-    if(this.mAllButtons.getObjectAt(0).getButtonState()){ 
+    if (this.mPowerUp.getButtonState()) {
         // Become slow proyectil mode
-         for(var i=0; i<this.mAllMinions.size(); i++){
-             var p1 = this.mAllMinions.getObjectAt(i).getProjectiles();
-                 for(var j=0; j<p1.size(); j ++){
-                      p1.getObjectAt(j).setSpeed(0.2)
-                 }
-             }
-             
-           }else{
-            for(var i=0; i<this.mAllMinions.size(); i++){
-                var p1 = this.mAllMinions.getObjectAt(i).getProjectiles();
-                    for(var j=0; j<p1.size(); j ++){
-                         p1.getObjectAt(j).setSpeed(0.5)
-                    }
-                }
-           }
-
-
-    
-    
-
-
-
-    for (i = 0; i < this.mAllButtons.size(); i++) {
-        var buttonBox = this.mAllButtons.getObjectAt(i).getPhysicsComponent();
-        collided = this.mIllumHero.getPhysicsComponent().collided(buttonBox, collisionInfo);
-        if (collided) {
-           this.mAllButtons.getObjectAt(i).pressButton();
-         
+        for (var i = 0; i < this.mAllMinions.size(); i++) {
+            var p1 = this.mAllMinions.getObjectAt(i).getProjectiles();
+            for (var j = 0; j < p1.size(); j++) {
+                p1.getObjectAt(j).setSpeed(0.15);
+            }
         }
     }
 
-    var allUnlocked = false;
-    for (i = 0; i < this.mAllButtons.size(); i++) {
-        if (this.mAllButtons.getObjectAt(i).getButtonState() === true) {
-            allUnlocked = true;
-        } else {
-            allUnlocked = false;
-            break;
-        }
+    var buttonBox = this.mPowerUp.getPhysicsComponent();
+    collided = this.mIllumHero
+        .getPhysicsComponent()
+        .collided(buttonBox, collisionInfo);
+    if (collided) {
+        this.mPowerUp.pressButton();
     }
 
-    if (allUnlocked) {
+    var keyBox = this.mKey.getPhysicsComponent();
+    collided = this.mIllumHero.getPhysicsComponent().collided(keyBox, collisionInfo);
+    if (collided){
+        this.mIllumHero.setCanOpenDoor(true);        
+    }
+    var openDoor = this.mIllumHero.canOpenDoor();
+    if(openDoor){
+        this.mKey.portarLlave(xpos, ypos);
+    }
+    if (openDoor && xpos > 62) {
         this.mAllDoors.getObjectAt(0).unlockDoor();
     }
-    
-    if(this.mIllumHero.getXform().getXPos() > this.kLevelFinishedPosition){
+
+    if (this.mIllumHero.getXform().getXPos() > this.kLevelFinishedPosition) {
         this.mRestart = false;
         gEngine.GameLoop.stop();
     }
-
-
 };
 
 GameLevel_01.prototype._physicsSimulation = function () {
-
     // Hero platform
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllPlatforms);
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllWalls);
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllDoors);
 
-
     // Minion platform
     gEngine.Physics.processSetSet(this.mAllMinions, this.mAllPlatforms);
-
 };
 
-GameLevel_01.prototype.createParticle = function(atX, atY) {
+GameLevel_01.prototype.createParticle = function (atX, atY) {
     var life = 30 + Math.random() * 200;
     var p = new ParticleGameObject("assets/particle.png", atX, atY, life);
     p.getRenderable().setColor([1, 0, 0, 1]);
-    
+
     // size of the particle
-    var r = 3.5 + Math.random() * 2.5;
+    var r = 0.5 + Math.random() * 0.5;
     p.getXform().setSize(r, r);
-    
+
     // final color
     var fr = 3.5 + Math.random();
     var fg = 0.4 + 0.1 * Math.random();
     var fb = 0.3 + 0.1 * Math.random();
     p.setFinalColor([fr, fg, fb, 0.6]);
-    
+
     // velocity on the particle
     var fx = 10 * Math.random() - 20 * Math.random();
     var fy = 10 * Math.random();
     p.getPhysicsComponent().setVelocity([fx, fy]);
-    
+
     // size delta
     p.setSizeDelta(0.98);
-    
+
     return p;
 };

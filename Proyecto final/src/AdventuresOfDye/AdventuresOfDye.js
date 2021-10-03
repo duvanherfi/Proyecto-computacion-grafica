@@ -45,7 +45,7 @@ AdventuresOfDye.prototype.draw = function () {
     this.mMsg.setText("Press enter for continue");
     this.mMsg.getXform().setPosition(10, 55);
     this.mMsg.draw(this.mCamera);
-    this.mMsg.setText("<Space Bar> to Start");
+    this.mMsg.setText("<Enter> to Start");
     this.mMsg.getXform().setPosition(10, 45);
     this.mMsg.draw(this.mCamera);
 };
@@ -55,7 +55,7 @@ AdventuresOfDye.prototype.draw = function () {
 AdventuresOfDye.prototype.update = function () {
     
     // select which character to work with
-    if (gEngine.Input.isKeyClicked(gEngine.Input.keys.Space))
+    if (gEngine.Input.isKeyClicked(gEngine.Input.keys.Enter))
         gEngine.GameLoop.stop();
 };
 
