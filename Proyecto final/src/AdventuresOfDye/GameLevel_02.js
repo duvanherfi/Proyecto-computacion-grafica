@@ -7,7 +7,11 @@ function GameLevel_02(level) {
     this.kPlatformNormal = "assets/platform_normal.png";
     this.kWall = "assets/wall.png";
     this.kWallNormal = "assets/wall_normal.png";
+    this.kProjectileTexture2 = "assets/bullet.png";
+    this.kWeapon = "assets/weapon.png";
 
+
+    this.mPowerUp = null;
     // specifics to the level
     this.kLevelFile = "assets/" + level + "/" + level + ".xml";  // e.g., assets/Level1/Level1.xml
     this.kBg = "assets/" + level + "/bg.png";
@@ -63,7 +67,8 @@ GameLevel_02.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kBgNormal);
     gEngine.Textures.loadTexture(this.kBgLayer);
     gEngine.Textures.loadTexture(this.kBgLayerNormal);
-
+    gEngine.Textures.loadTexture(this.kProjectileTexture2);
+    gEngine.Textures.loadTexture(this.kWeapon);
     gEngine.Textures.loadTexture(this.kDyeBoss_Bottom);
     gEngine.Textures.loadTexture(this.kDyeBoss_Top);
     gEngine.Textures.loadTexture(this.kDyeBoss_CenterSpawn);
@@ -88,7 +93,8 @@ GameLevel_02.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kBgNormal);
     gEngine.Textures.unloadTexture(this.kBgLayer);
     gEngine.Textures.unloadTexture(this.kBgLayerNormal);
-
+    gEngine.Textures.unloadTexture(this.kProjectileTexture2);
+    gEngine.Textures.unloadTexture(this.kWeapon);
     gEngine.Textures.unloadTexture(this.kDyeBoss_Bottom);
     gEngine.Textures.unloadTexture(this.kDyeBoss_Top);
     gEngine.Textures.unloadTexture(this.kDyeBoss_CenterSpawn);
@@ -123,6 +129,8 @@ GameLevel_02.prototype.initialize = function () {
         this.mAllPlatforms.addToSet(p[i]);
     }
 
+    this.mPowerUp = new Button(0, 12, this.kWeapon, 0, this.mGlobalLightSet);
+
     // parsing of actors can only begin after background has been parsed
     // to ensure proper support shadow
     // for now here is the hero
@@ -151,6 +159,8 @@ GameLevel_02.prototype.initialize = function () {
     // Hero can only be added as shadow caster after background is created
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumHero);
     gEngine.LayerManager.addAsShadowCaster(this.mIllumHero);
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mPowerUp);
+    gEngine.LayerManager.addAsShadowCaster(this.mPowerUp);
 
 
     this.mSlectedCh = this.mIllumHero;
@@ -231,6 +241,26 @@ GameLevel_02.prototype.update = function () {
         }
     }
 
+    
+    // Get weapon
+    var xf = this.mIllumHero.getXform();
+    var xpos = this.mIllumHero.getXform().getXPos();
+    var ypos = this.mIllumHero.getXform().getYPos();
+
+    var getWeapon;
+    var weaponBox = this.mPowerUp.getPhysicsComponent();
+    collided = this.mIllumHero
+        .getPhysicsComponent()
+        .collided(weaponBox, collisionInfo);
+    if (collided) {
+        getWeapon = true;
+        this.mIllumHero.setWeapon(getWeapon);
+        this.mPowerUp
+            .getXform()
+            .setPosition(xpos+0.4, ypos+0.1);
+    } else {
+        getWeapon = false;
+    }
 
 
 };

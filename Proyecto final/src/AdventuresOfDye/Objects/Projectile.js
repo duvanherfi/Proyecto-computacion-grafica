@@ -1,7 +1,8 @@
 "use strict";
 
-function Projectile(atX, atY, velocity, radius) {
-    this.kTexture = "assets/EMPPulse.png";
+function Projectile(atX, atY, velocity, radius, texture) {
+    this.kTexture = texture;
+    // this.kTexture = "assets/EMPPulse.png";
     this.kSpeed = 0.5;
 
     ParticleGameObject.call(this, this.kTexture, atX, atY, 500);

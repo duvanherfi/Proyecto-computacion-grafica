@@ -5,6 +5,7 @@ function Shield(cx, cy, texture, lightSet) {
     this.kWidth = 1.2;
     this.kHeight = 1.2;
     this.mIsUnlocked = false;
+
     this.mShield = new LightRenderable(texture);
 
     var i;

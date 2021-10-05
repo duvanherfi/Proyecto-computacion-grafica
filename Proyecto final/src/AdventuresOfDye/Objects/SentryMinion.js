@@ -18,7 +18,7 @@ SentryMinion.prototype.update = function () {
     this.mNumCycles++;
     if(this.mNumCycles > this.kShootTimer){
         this.mNumCycles = 0;
-        b = new Projectile(this.getXform().getXPos() - 0.5, this.getXform().getYPos(), [-1, 0], 0.75);
+        b = new Projectile(this.getXform().getXPos() - 0.5, this.getXform().getYPos(), [-1, 0], 0.75, "assets/EMPPulse.png");
         this.mProjectiles.addToSet(b);
     }
         

@@ -22,6 +22,7 @@ function GameLevel_01(level) {
     this.kDoorSleeve = "assets/DoorFrame_AnimSheet.png";
     this.kButton = "assets/DoorFrame_Button_180x100.png";
     this.kProjectileTexture = "assets/EMPPulse.png";
+    this.kProjectileTexture2 = "assets/bullet.png";
     this.kimpact = "assets/particle.png";
     this.kCue = "assets/sounds/BGClip.mp3";
     this.kShield = "assets/escudo.png";
@@ -88,6 +89,7 @@ GameLevel_01.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kDoorSleeve);
     gEngine.Textures.loadTexture(this.kButton);
     gEngine.Textures.loadTexture(this.kProjectileTexture);
+    gEngine.Textures.loadTexture(this.kProjectileTexture2);
     gEngine.Textures.loadTexture(this.kShield);
     gEngine.Textures.loadTexture(this.kKey);
 
@@ -115,6 +117,7 @@ GameLevel_01.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kDoorSleeve);
     gEngine.Textures.unloadTexture(this.kButton);
     gEngine.Textures.unloadTexture(this.kProjectileTexture);
+    gEngine.Textures.unloadTexture(this.kProjectileTexture2);
     gEngine.Textures.unloadTexture(this.kShield);
     gEngine.Textures.unloadTexture(this.kKey);
 
@@ -177,7 +180,7 @@ GameLevel_01.prototype.initialize = function () {
     }
 
     this.mPowerUp = new Button(0, 12, this.kButton, 0, this.mGlobalLightSet);
-    this.mKey = new Key(25, 14, this.kKey, this.mGlobalLightSet);
+    this.mKey = new Key(60, 9, this.kKey, this.mGlobalLightSet);
     // parsing of actors can only begin after background has been parsed
     // to ensure proper support shadow
     // for now here is the hero

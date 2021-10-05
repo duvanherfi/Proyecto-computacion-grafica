@@ -52,6 +52,7 @@
     <Wall PosX="64" PosY="12.5" />
     <Wall PosX="64" PosY="17.5" />
     <Wall PosX="64" PosY="22.5" />
+  
     
     <Boss PosX="40" PosY="9" Velocity="1 0 0" MovementRange="2" Type="0"/>
        

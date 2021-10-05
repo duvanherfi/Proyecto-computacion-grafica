@@ -57,7 +57,8 @@
     <Door PosX="64" PosY="3" />
 
     <!-- Shield -->
-    <Shield PosX="60" PosY="9" />
+    <Shield PosX="25" PosY="14" />
+    
    
     
      <!-- Minions -->
