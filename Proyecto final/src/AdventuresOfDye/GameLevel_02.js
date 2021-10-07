@@ -34,12 +34,12 @@ function GameLevel_02(level) {
     this.mShowPeek = false;
 
     this.mMsg = null;
-    this.mMatMsg = null;
-
+    this.pruebas = null;
+    this.mRestart = false;
     // the hero and the support objects
     this.mHero = null;
     this.mIllumHero = null;
-
+    this.mBoss = null;
     this.mGlobalLightSet = null;
 
     this.mThisLevel = level;
@@ -49,6 +49,7 @@ function GameLevel_02(level) {
     this.mLgtRotateTheta = 0;
 
     this.mAllPlatforms = new GameObjectSet();
+    this.mAllWalls = new GameObjectSet();
     this.mAllMinions = new GameObjectSet();
     this.mAllParticles = new ParticleGameObjectSet();
 }
@@ -102,9 +103,14 @@ GameLevel_02.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kDyeBoss_WeakPoint_Blue);
     gEngine.Textures.unloadTexture(this.kDyeBoss_WeakPoint_Green);
     gEngine.Textures.unloadTexture(this.kDyeBoss_WeakPoint_Red);
-
-    var nextLevel = new GameLevel_02(this.mNextLevel);  // next level to be loaded
-    gEngine.Core.startScene(nextLevel);
+ // next level to be loaded
+    if (this.mRestart === true) {
+        var nextLevel = new GameLevel_02("Level2"); // next level to be loaded
+        gEngine.Core.startScene(nextLevel);
+    } else {
+        var nextLevel = new AdventuresOfDye(); // next level to be loaded
+        gEngine.Core.initializeEngineCore('GLCanvas', nextLevel);
+    }
 };
 
 GameLevel_02.prototype.initialize = function () {
@@ -122,7 +128,10 @@ GameLevel_02.prototype.initialize = function () {
     // parse background, needs the camera as a reference for parallax
     parser.parseBackground(this.mThisLevel, this.mCamera, this.mGlobalLightSet);
 
-    parser.parseWall(this.kWall, this.kWallNormal, this.mGlobalLightSet);
+    var w = parser.parseWall(this.kWall, this.kWallNormal, this.mGlobalLightSet);
+    for (i = 0; i < w.length; i++) {
+        this.mAllWalls.addToSet(w[i]);
+    }
     var p = parser.parsePlatform(this.kPlatform, this.kPlatformNormal, this.mGlobalLightSet);
     var i;
     for (i = 0; i < p.length; i++) {
@@ -136,23 +145,24 @@ GameLevel_02.prototype.initialize = function () {
     // for now here is the hero
     this.mIllumHero = new Hero(this.kHeroSprite, null, 2, 6, this.mGlobalLightSet);
     
-    var b = parser.parseBoss(this.kDyeBoss_Bottom, this.kDyeBoss_Top, this.kDyeBoss_CenterSpawn,
+    this.mBoss = parser.parseBoss(this.kDyeBoss_Bottom, this.kDyeBoss_Top, this.kDyeBoss_CenterSpawn,
             this.kDyeBoss_Eyeballs, this.kDyeBoss_WeakPoint_Blue, this.kDyeBoss_WeakPoint_Green,
             this.kDyeBoss_WeakPoint_Red, null, this.mGlobalLightSet, this.mIllumHero);
+    this.mIllumHero.setMBoss(this.mBoss);
     
     this.mNextLevel = parser.parseNextLevel();
 
-    this.mMsg = new FontRenderable("Status Message");
+    this.mMsg = new FontRenderable("");
     this.mMsg.setColor([1, 1, 1, 1]);
     this.mMsg.getXform().setPosition(-9.5, 4);
     this.mMsg.setTextHeight(0.7);
 
-    this.mMatMsg = new FontRenderable("Status Message");
-    this.mMatMsg.setColor([1, 1, 1, 1]);
-    this.mMatMsg.getXform().setPosition(-9.5, 20);
-    this.mMatMsg.setTextHeight(0.7);
+    this.pruebas = new FontRenderable("H");
+    this.mMsg.setColor([1, 1, 1, 1]);
+    this.mMsg.getXform().setPosition(10, 16);
+    this.mMsg.setTextHeight(2);
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mMsg);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mMatMsg);
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.pruebas);
 
     // Add hero into the layer manager and as shadow caster
     // Hero should be added into Actor layer last
@@ -199,8 +209,10 @@ GameLevel_02.prototype.update = function () {
     this.mCamera.update();  // to ensure proper interpolated movement effects
     this.mAllParticles.update(this.mAllParticles);
     gEngine.LayerManager.updateAllLayers();
-
     var xf = this.mIllumHero.getXform();
+    var xpos = this.mIllumHero.getXform().getXPos();
+    var ypos = this.mIllumHero.getXform().getYPos();
+
     this.mCamera.setWCCenter(xf.getXPos(), 8);
     var p = vec2.clone(xf.getPosition());
     this.mGlobalLightSet.getLightAt(this.mLgtIndex).set2DPosition(p);
@@ -212,7 +224,7 @@ GameLevel_02.prototype.update = function () {
 
     // msg = this._selectCharacter();
     // msg += this.materialControl();
-    this.mMatMsg.setText("P: to peek the entire level; L: to change level to: " + this.mNextLevel);
+    //this.mMatMsg.setText("P: to peek the entire level; L: to change level to: " + this.mNextLevel);
 
     if (this.mShowPeek) {
         this.mPeekCam.setWCCenter(p[0], p[1]);
@@ -240,12 +252,13 @@ GameLevel_02.prototype.update = function () {
             break;
         }
     }
-
-    
-    // Get weapon
-    var xf = this.mIllumHero.getXform();
-    var xpos = this.mIllumHero.getXform().getXPos();
-    var ypos = this.mIllumHero.getXform().getYPos();
+     
+    var boss_Box = this.mBoss.getPhysicsComponent();
+    collided = this.mIllumHero.getJumpBox().collided(boss_Box, collisionInfo);
+    if (collided) {
+        this.pruebas.setText("Collision entre boss y heroe");
+        this.pruebas.getXform().setPosition(p[0], p[1]);
+    }
 
     var getWeapon;
     var weaponBox = this.mPowerUp.getPhysicsComponent();
@@ -284,9 +297,9 @@ GameLevel_02.prototype._physicsSimulation = function () {
 
     // Hero platform
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllPlatforms);
-
+    gEngine.Physics.processObjSet(this.mIllumHero, this.mAllWalls);
     // Hero Minion
-    //gEngine.Physics.processObjSet(this.mHero, this.mAllMinions);
+    gEngine.Physics.processObjSet(this.mIllumHero, this.mAllMinions);
 
     // Minion platform
     gEngine.Physics.processSetSet(this.mAllMinions, this.mAllPlatforms);

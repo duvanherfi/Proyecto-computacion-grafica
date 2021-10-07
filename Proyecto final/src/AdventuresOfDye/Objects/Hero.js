@@ -20,6 +20,7 @@ function Hero(spriteTexture, normalMap, atX, atY, lgtSet) {
     this.mNumCycles = 0;
     this.getWeapon = false;
     this.mProjectiles = new ParticleGameObjectSet();
+    this.mboss = null;
 
     if (normalMap !== null) {
         this.mDye = new IllumRenderable(spriteTexture, normalMap);
@@ -43,7 +44,7 @@ function Hero(spriteTexture, normalMap, atX, atY, lgtSet) {
 
     this.mDye.addLight(lgtSet.getLightAt(2)); //jeb fix
     //this.mDye.addLight(lgtSet.getLightAt(3));
-//    this.mDye.addLight(lgtSet.getLightAt(2));
+    //    this.mDye.addLight(lgtSet.getLightAt(2));
 
     var transform = new Transform();
     transform.setPosition(this.mDye.getXform().getXPos(), this.mDye.getXform().getYPos() - this.kHeight / 2);
@@ -70,36 +71,54 @@ Hero.eHeroState = Object.freeze({
     eJumpLeft: 5
 });
 
+Hero.prototype.setMBoss = function(mboss) {
+    this.mboss = mboss
+}
 
 Hero.prototype.update = function () {
     GameObject.prototype.update.call(this);
-   
-    
-this.mProjectiles.update();
-if(this.getWeapon){
-    var b;
-    this.mNumCycles++;
-    if(this.mNumCycles > this.kShootTimer){
-        this.mNumCycles = 0;
-        b = new Projectile(this.getXform().getXPos(), this.getXform().getYPos(), [1, 0], 0.75, "assets/bullet.png");
-        this.mProjectiles.addToSet(b);
+
+
+    this.mProjectiles.update();
+    if (this.getWeapon) {
+        var b;
+        this.mNumCycles++;
+        if (this.mNumCycles > this.kShootTimer) {
+            this.mNumCycles = 0;
+            b = new Projectile(this.getXform().getXPos(), this.getXform().getYPos(), [1, 0], 0.75, "assets/bullet.png");
+            this.mProjectiles.addToSet(b);
+        }
     }
-}
-    
+
+    var p = this.mProjectiles
+    var collisionInfo = new CollisionInfo();
+        for (var j = 0; j < p.size(); j++) {
+            var pBox = p.getObjectAt(j).getPhysicsComponent();
+            var collided = this.mboss
+                .getPhysicsComponent()
+                .collided(pBox, collisionInfo);
+            if (collided) {
+                this.mboss.set_life(10);
+                if(this.mboss.get_life() <= 0){
+                    gEngine.GameLoop.stop();
+                }
+            }
+        }
+
     this.mJumpBox.setPosition(this.mDye.getXform().getXPos(), this.mDye.getXform().getYPos() - this.kHeight / 2);
-    
+
     // control by WASD
     var xform = this.getXform();
     this.mIsMoving = false;
     var v = this.getPhysicsComponent().getVelocity();
-    
+
     if (gEngine.Input.isKeyPressed(gEngine.Input.keys.A)) {
         if (this.mCanJump === true) {
             this.mPreviousHeroState = this.mHeroState;
             this.mHeroState = Hero.eHeroState.eRunLeft;
             this.mIsMoving = true;
         }
-        
+
         xform.incXPosBy(-this.kDelta);
     }
     if (gEngine.Input.isKeyPressed(gEngine.Input.keys.D)) {
@@ -108,42 +127,42 @@ if(this.getWeapon){
             this.mHeroState = Hero.eHeroState.eRunRight;
             this.mIsMoving = true;
         }
-        
+
         xform.incXPosBy(this.kDelta);
     }
-    
-    
+
+
     if (this.mCanJump === true) {
         if (this.mIsMoving === false) {
             this.mPreviousHeroState = this.mHeroState;
             if (this.mHeroState === Hero.eHeroState.eRunRight || this.mHeroState === Hero.eHeroState.eJumpRight)
-            this.mHeroState = Hero.eHeroState.eFaceRight;
+                this.mHeroState = Hero.eHeroState.eFaceRight;
             if (this.mHeroState === Hero.eHeroState.eRunLeft || this.mHeroState === Hero.eHeroState.eJumpLeft)
-            this.mHeroState = Hero.eHeroState.eFaceLeft;
+                this.mHeroState = Hero.eHeroState.eFaceLeft;
         }
-        
+
         if (gEngine.Input.isKeyPressed(gEngine.Input.keys.Space)) {
             v[1] = 35; // Jump velocity
             this.mPreviousHeroState = this.mHeroState;
             if (this.mHeroState === Hero.eHeroState.eRunRight
                 || this.mHeroState === Hero.eHeroState.eFaceRight)
                 this.mHeroState = Hero.eHeroState.eJumpRight;
-                if (this.mHeroState === Hero.eHeroState.eRunLeft
-                    || this.mHeroState === Hero.eHeroState.eFaceLeft)
-                    this.mHeroState = Hero.eHeroState.eJumpLeft;
-                    this.mIsMoving = true;
-                }
-            }
-            
-            this.changeAnimation();
-            this.mDye.updateAnimation();
-            this.mIsMoving = false;
-            this.mCanJump = false;
-            
-        };
-        
-        Hero.prototype.changeAnimation = function () {
-            if (this.mHeroState !== this.mPreviousHeroState) {
+            if (this.mHeroState === Hero.eHeroState.eRunLeft
+                || this.mHeroState === Hero.eHeroState.eFaceLeft)
+                this.mHeroState = Hero.eHeroState.eJumpLeft;
+            this.mIsMoving = true;
+        }
+    }
+
+    this.changeAnimation();
+    this.mDye.updateAnimation();
+    this.mIsMoving = false;
+    this.mCanJump = false;
+
+};
+
+Hero.prototype.changeAnimation = function () {
+    if (this.mHeroState !== this.mPreviousHeroState) {
         switch (this.mHeroState) {
             case Hero.eHeroState.eFaceLeft:
                 this.mDye.setSpriteSequence(1508, 0, 140, 180, 3, 0);
@@ -193,11 +212,11 @@ Hero.prototype.getJumpBox = function () {
     return this.mJumpBox;
 };
 
-Hero.prototype.canOpenDoor = function (){
+Hero.prototype.canOpenDoor = function () {
     return this.OpenDoor;
 }
 
-Hero.prototype.setCanOpenDoor = function (b){
+Hero.prototype.setCanOpenDoor = function (b) {
     this.OpenDoor = b;
 }
 
@@ -205,9 +224,6 @@ Hero.prototype.getProjectiles = function () {
     return this.mProjectiles
 };
 
-Hero.prototype.setWeapon = function (w){
+Hero.prototype.setWeapon = function (w) {
     this.getWeapon = w;
 }
-
-
-
