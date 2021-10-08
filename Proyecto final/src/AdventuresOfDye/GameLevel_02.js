@@ -1,6 +1,6 @@
 "use strict";  // Operate in Strict mode such that variables must be declared before used!
 
-function GameLevel_02(level) {
+function GameLevel_02(level, time) {
     this.kHeroSprite = "assets/hero_sprite.png";
     this.kMinionSprite = "assets/minion_sprite.png";
     this.kPlatform = "assets/platform.png";
@@ -38,8 +38,8 @@ function GameLevel_02(level) {
     this.mCamera = null;
     this.mPeekCam = null;
     this.mShowPeek = false;
-
-    this.mMsg = null;
+    this.t = time;
+    this.mMsg = time;
     this.pruebas = null;
     this.mRestart = false;
     // the hero and the support objects
@@ -118,7 +118,7 @@ GameLevel_02.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kDyeBoss_WeakPoint_Red);
     // next level to be loaded
     if (this.mRestart === true) {
-        var nextLevel = new GameLevel_02("Level2"); // next level to be loaded
+        var nextLevel = new GameLevel_02("Level2", this.t); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     } else {
         var nextLevel = new GameLevel_03("Level3"); // next level to be loaded
@@ -174,17 +174,13 @@ GameLevel_02.prototype.initialize = function () {
 
     this.mNextLevel = parser.parseNextLevel();
 
-    this.mMsg = new FontRenderable("");
-    this.mMsg.setColor([1, 1, 1, 1]);
-    this.mMsg.getXform().setPosition(-9.5, 4);
-    this.mMsg.setTextHeight(0.7);
-
-    this.pruebas = new FontRenderable("H");
-    this.mMsg.setColor([1, 1, 1, 1]);
+    var t = this.mMsg.getText();
+    this.mMsg = new FontRenderable(t);
+    this.mMsg.setColor([1, 0, 0, 1]);
     this.mMsg.getXform().setPosition(10, 16);
     this.mMsg.setTextHeight(2);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mMsg);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.pruebas);
+ 
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg);
 
     // Add hero into the layer manager and as shadow caster
     // Hero should be added into Actor layer last
@@ -216,6 +212,8 @@ GameLevel_02.prototype.draw = function () {
 
     this.mCamera.setupViewProjection();
     gEngine.LayerManager.drawAllLayers(this.mCamera);
+    this.mMsg.draw(this.mCamera);
+
     this.mAllParticles.draw(this.mCamera);
 
 
@@ -228,9 +226,25 @@ GameLevel_02.prototype.draw = function () {
 // The Update function, updates the application state. Make sure to _NOT_ draw
 // anything from this function!
 GameLevel_02.prototype.update = function () {
+    console.log(this.mMsg.getText())
     this.mCamera.update();  // to ensure proper interpolated movement effects
 
     gEngine.LayerManager.updateAllLayers();
+
+    
+    //Implment about the timer (left function implement)
+    var ms = this.mMsg;
+    var v = parseInt(ms.getText(), 10);
+    if (v == 0) {
+        this.mRestart = true;
+        gEngine.GameLoop.stop();
+    } else {
+        setTimeout(function () {
+            v = v - 1;
+            ms.setText(String(v));
+        }, 1000);
+    }
+
     var xf = this.mIllumHero.getXform();
     var xpos = this.mIllumHero.getXform().getXPos();
     var ypos = this.mIllumHero.getXform().getYPos();
@@ -323,18 +337,21 @@ GameLevel_02.prototype.update = function () {
                 let x = this.mBoss.getXform().getXPos();
                 let y = this.mBoss.getXform().getYPos();
                 this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
-
-                if (this.mBoss.getLife() <= 0) {
-                    this.mIllumHero.setCanOpenDoor(true);
-                    this.mCamera.shake(-2, -2, 20, 60);
-                    // let x = this.mBoss.getXform().getXPos();
-                    // let y = this.mBoss.getXform().getYPos();
-                    // this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
-                    // // this.mIllumHero.setWeapon(false);
+                if(this.mBoss.getLife() <= 0){
+                    this.mCamera.shake(-2, -2, 20, 70);
                 }
             }
         }
 
+    }
+
+    //Efects after destroy the boss
+    if (this.mBoss.getLife() <= 0) {
+        this.mIllumHero.setCanOpenDoor(true);
+        let x = this.mBoss.getXform().getXPos();
+        let y = this.mBoss.getXform().getYPos();
+        this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
+        this.mIllumHero.setWeapon(false);
     }
 
 

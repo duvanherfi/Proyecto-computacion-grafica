@@ -28,6 +28,7 @@ function GameLevel_01(level) {
     this.kShield = "assets/escudo.png";
     this.kKey = "assets/key.png";
 
+
     //Text
     this.Mmsg = null;
 
@@ -132,7 +133,7 @@ GameLevel_01.prototype.unloadScene = function () {
         var nextLevel = new GameLevel_01("Level1"); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     } else {
-        var nextLevel = new GameLevel_02(this.mNextLevel); // next level to be loaded
+        var nextLevel = new GameLevel_02("Level2", this.mMsg ); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     }
 };
