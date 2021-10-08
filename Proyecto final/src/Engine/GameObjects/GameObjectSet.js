@@ -21,6 +21,15 @@ function GameObjectSet() {
 
 /**
  * Return the count of GameObjects in set
+ * @returns {null} count of GameObjects in set
+ * @memberOf GameObjectSet
+ */
+GameObjectSet.prototype.setMSet = function(set){
+    this.mSet = set;
+};
+
+/**
+ * Return the count of GameObjects in set
  * @returns {Number} count of GameObjects in set
  * @memberOf GameObjectSet
  */

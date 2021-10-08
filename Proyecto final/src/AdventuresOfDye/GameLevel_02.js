@@ -10,7 +10,7 @@ function GameLevel_02(level) {
     this.kProjectileTexture2 = "assets/bullet.png";
     this.kWeapon = "assets/weapon.png";
     this.kParticle = "assets/EMPPulse.png";
-    
+
     // Doors
     this.kDoorTop = "assets/DoorInterior_Top.png";
     this.kDoorBot = "assets/DoorInterior_Bottom.png";
@@ -116,13 +116,13 @@ GameLevel_02.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kDyeBoss_WeakPoint_Blue);
     gEngine.Textures.unloadTexture(this.kDyeBoss_WeakPoint_Green);
     gEngine.Textures.unloadTexture(this.kDyeBoss_WeakPoint_Red);
- // next level to be loaded
+    // next level to be loaded
     if (this.mRestart === true) {
         var nextLevel = new GameLevel_02("Level2"); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     } else {
-        var nextLevel = new AdventuresOfDye(); // next level to be loaded
-        gEngine.Core.initializeEngineCore('GLCanvas', nextLevel);
+        var nextLevel = new GameLevel_03("Level3"); // next level to be loaded
+        gEngine.Core.startScene(nextLevel);
     }
 };
 
@@ -166,12 +166,12 @@ GameLevel_02.prototype.initialize = function () {
     // to ensure proper support shadow
     // for now here is the hero
     this.mIllumHero = new Hero(this.kHeroSprite, null, 2, 6, this.mGlobalLightSet);
-    
+
     this.mBoss = parser.parseBoss(this.kDyeBoss_Bottom, this.kDyeBoss_Top, this.kDyeBoss_CenterSpawn,
-            this.kDyeBoss_Eyeballs, this.kDyeBoss_WeakPoint_Blue, this.kDyeBoss_WeakPoint_Green,
-            this.kDyeBoss_WeakPoint_Red, null, this.mGlobalLightSet, this.mIllumHero);
+        this.kDyeBoss_Eyeballs, this.kDyeBoss_WeakPoint_Blue, this.kDyeBoss_WeakPoint_Green,
+        this.kDyeBoss_WeakPoint_Red, null, this.mGlobalLightSet, this.mIllumHero);
     this.mIllumHero.setMBoss(this.mBoss);
-    
+
     this.mNextLevel = parser.parseNextLevel();
 
     this.mMsg = new FontRenderable("");
@@ -200,11 +200,11 @@ GameLevel_02.prototype.initialize = function () {
     this.mSelectedChMsg = "";
 
     this.mPeekCam = new Camera(
-            vec2.fromValues(0, 0),
-            120,
-            [0, 0, 320, 180],
-            2
-            );
+        vec2.fromValues(0, 0),
+        120,
+        [0, 0, 320, 180],
+        2
+    );
     this.mShowPeek = false;
 };
 
@@ -229,7 +229,7 @@ GameLevel_02.prototype.draw = function () {
 // anything from this function!
 GameLevel_02.prototype.update = function () {
     this.mCamera.update();  // to ensure proper interpolated movement effects
-    
+
     gEngine.LayerManager.updateAllLayers();
     var xf = this.mIllumHero.getXform();
     var xpos = this.mIllumHero.getXform().getXPos();
@@ -238,15 +238,6 @@ GameLevel_02.prototype.update = function () {
     this.mCamera.setWCCenter(xf.getXPos(), 8);
     var p = vec2.clone(xf.getPosition());
     this.mGlobalLightSet.getLightAt(this.mLgtIndex).set2DPosition(p);
-
-    // control the selected light
-//    var msg = "L=" + this.mLgtIndex + " ";
-//    msg += this._lightControl();
-//    this.mMsg.setText(msg);
-
-    // msg = this._selectCharacter();
-    // msg += this.materialControl();
-    //this.mMatMsg.setText("P: to peek the entire level; L: to change level to: " + this.mNextLevel);
 
     if (this.mShowPeek) {
         this.mPeekCam.setWCCenter(p[0], p[1]);
@@ -258,6 +249,9 @@ GameLevel_02.prototype.update = function () {
     if (gEngine.Input.isKeyClicked(gEngine.Input.keys.L)) {
         gEngine.GameLoop.stop();
     }
+
+    var m = this.mBoss.getMinions();
+    this.mAllMinions.setMSet(m);
 
     // physics simulation
     this._physicsSimulation();
@@ -274,13 +268,6 @@ GameLevel_02.prototype.update = function () {
             break;
         }
     }
-     
-    // var boss_Box = this.mBoss.getPhysicsComponent();
-    // collided = this.mIllumHero.getJumpBox().collided(boss_Box, collisionInfo);
-    // if (collided) {
-    //     this.pruebas.setText("Collision entre boss y heroe");
-    //     this.pruebas.getXform().setPosition(p[0], p[1]);
-    // }
 
     this.mAllParticles.update();
 
@@ -295,19 +282,19 @@ GameLevel_02.prototype.update = function () {
         this.mIllumHero.setWeapon(getWeapon);
         this.mPowerUp
             .getXform()
-            .setPosition(xpos+0.4, ypos+0.1);
+            .setPosition(xpos + 0.4, ypos + 0.1);
     } else {
         getWeapon = false;
     }
 
     //Collisions between hero and ChaseMinion
-    var arrM = this.mBoss.getMinions()
-    
-    for (var i = 0; i < arrM.length; i++) {
-        var boxCM=arrM[i].getPhysicsComponent()
+    var arrM = this.mBoss.getMinions();
 
-        collided= this.mIllumHero.getPhysicsComponent().collided(boxCM, collisionInfo);
-        if(collided){
+    for (var i = 0; i < arrM.length; i++) {
+        var boxCM = arrM[i].getPhysicsComponent()
+
+        collided = this.mIllumHero.getPhysicsComponent().collided(boxCM, collisionInfo);
+        if (collided) {
             this.mRestart = true;
             gEngine.GameLoop.stop();
         }
@@ -317,37 +304,40 @@ GameLevel_02.prototype.update = function () {
     if (openDoor && xpos > 62) {
         this.mAllDoors.getObjectAt(0).unlockDoor();
     }
+    if (xpos > 65) {
+        this.mRestart = false;
+        gEngine.GameLoop.stop();
+    }
     //Logic for collisions and boss durability 
 
-    if(getWeapon){
+    if (getWeapon) {
         var projectiles = this.mIllumHero.getProjectiles();
         var pf = null;
         var i;
         console.log(this.mBoss.getLife());
-        for(i=0; i<projectiles.size(); i++ ){
+        for (i = 0; i < projectiles.size(); i++) {
             pf = projectiles.getObjectAt(i).getPhysicsComponent();
-            collided= this.mBoss.getPhysicsComponent().collided(pf, collisionInfo);
-            if(collided){
-                this.mBoss.setLife(100);    
+            collided = this.mBoss.getPhysicsComponent().collided(pf, collisionInfo);
+            if (collided) {
+                this.mBoss.setLife(100);
                 let x = this.mBoss.getXform().getXPos();
                 let y = this.mBoss.getXform().getYPos();
                 this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
 
-                if(this.mBoss.getLife() <= 0){
-                    this.mIllumHero.setCanOpenDoor(true);     
-                     this.mCamera.shake(-2, -2, 20, 60);
+                if (this.mBoss.getLife() <= 0) {
+                    this.mIllumHero.setCanOpenDoor(true);
+                    this.mCamera.shake(-2, -2, 20, 60);
                     // let x = this.mBoss.getXform().getXPos();
                     // let y = this.mBoss.getXform().getYPos();
                     // this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
                     // // this.mIllumHero.setWeapon(false);
-                  
-                        }
+                }
             }
         }
-    
+
     }
-    
-  
+
+
 };
 
 GameLevel_02.prototype._selectCharacter = function () {
