@@ -13,7 +13,7 @@ function Boss(atX, atY, velocity, movementRange, type, texture0, texture1, textu
     this.mLightSet = lightSet;
     this.mHeroRef = hero;
     this.mAllMinions = [];
-    this.life = 1000;
+    this.life = 15000;
     // control of movement
     this.mInitialPosition = vec2.fromValues(atX, atY);
     this.mMovementRange = movementRange;
@@ -188,15 +188,20 @@ Boss.prototype.draw = function (aCamera) {
 Boss.prototype._spawnChaser = function () {
     var x = this.getXform().getXPos();
     var y = this.getXform().getYPos();
-    var m = new ChaserMinion(x, y, [0, 0], 0, 2, this.kMinionTex, null, this.mLightSet, 1, 1.6);
+    var m = new ChaserMinion(x, y, [0, 0], 0, 2, this.kMinionTex, null, this.mLightSet, 1, 2);
     this.mAllMinions.push(m);
 };
 
-Boss.prototype.set_life = function (b){
-    this.life -= b;
+Boss.prototype.getMinions= function () {
+
+    return this.mAllMinions;
+};
+
+Boss.prototype.setLife = function (b){
+    this.life = this.life -b;
 }
 
-Boss.prototype.get_life = function (){
+Boss.prototype.getLife = function (){
     return this.life;
 }
 

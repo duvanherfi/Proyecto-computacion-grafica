@@ -9,7 +9,12 @@ function GameLevel_02(level) {
     this.kWallNormal = "assets/wall_normal.png";
     this.kProjectileTexture2 = "assets/bullet.png";
     this.kWeapon = "assets/weapon.png";
-
+    this.kParticle = "assets/EMPPulse.png";
+    
+    // Doors
+    this.kDoorTop = "assets/DoorInterior_Top.png";
+    this.kDoorBot = "assets/DoorInterior_Bottom.png";
+    this.kDoorSleeve = "assets/DoorFrame_AnimSheet.png";
 
     this.mPowerUp = null;
     // specifics to the level
@@ -26,6 +31,7 @@ function GameLevel_02(level) {
     this.kDyeBoss_WeakPoint_Blue = "assets/" + level + "/DyeBoss_WeakPoint_Blue.png";
     this.kDyeBoss_WeakPoint_Green = "assets/" + level + "/DyeBoss_WeakPoint_Green.png";
     this.kDyeBoss_WeakPoint_Red = "assets/" + level + "/DyeBoss_WeakPoint_Red.png";
+
 
 
     // The camera to view the scene
@@ -52,6 +58,7 @@ function GameLevel_02(level) {
     this.mAllWalls = new GameObjectSet();
     this.mAllMinions = new GameObjectSet();
     this.mAllParticles = new ParticleGameObjectSet();
+    this.mAllDoors = new GameObjectSet();
 }
 gEngine.Core.inheritPrototype(GameLevel_02, Scene);
 
@@ -61,9 +68,12 @@ GameLevel_02.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kMinionSprite);
     gEngine.Textures.loadTexture(this.kPlatform);
     gEngine.Textures.loadTexture(this.kPlatformNormal);
+    gEngine.Textures.loadTexture(this.kParticle);
     gEngine.Textures.loadTexture(this.kWall);
     gEngine.Textures.loadTexture(this.kWallNormal);
-
+    gEngine.Textures.loadTexture(this.kDoorTop);
+    gEngine.Textures.loadTexture(this.kDoorBot);
+    gEngine.Textures.loadTexture(this.kDoorSleeve);
     gEngine.Textures.loadTexture(this.kBg);
     gEngine.Textures.loadTexture(this.kBgNormal);
     gEngine.Textures.loadTexture(this.kBgLayer);
@@ -86,10 +96,13 @@ GameLevel_02.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kHeroSprite);
     gEngine.Textures.unloadTexture(this.kMinionSprite);
     gEngine.Textures.unloadTexture(this.kPlatform);
+    gEngine.Textures.unloadTexture(this.kParticle);
     gEngine.Textures.unloadTexture(this.kPlatformNormal);
     gEngine.Textures.unloadTexture(this.kWall);
     gEngine.Textures.unloadTexture(this.kWallNormal);
-
+    gEngine.Textures.unloadTexture(this.kDoorTop);
+    gEngine.Textures.unloadTexture(this.kDoorBot);
+    gEngine.Textures.unloadTexture(this.kDoorSleeve);
     gEngine.Textures.unloadTexture(this.kBg);
     gEngine.Textures.unloadTexture(this.kBgNormal);
     gEngine.Textures.unloadTexture(this.kBgLayer);
@@ -138,7 +151,16 @@ GameLevel_02.prototype.initialize = function () {
         this.mAllPlatforms.addToSet(p[i]);
     }
 
-    this.mPowerUp = new Button(0, 12, this.kWeapon, 0, this.mGlobalLightSet);
+    var d = parser.parseDoors(
+        this.kDoorTop,
+        this.kDoorBot,
+        this.kDoorSleeve,
+        this.mGlobalLightSet
+    );
+    for (i = 0; i < d.length; i++) {
+        this.mAllDoors.addToSet(d[i]);
+    }
+    this.mPowerUp = new Button(20, 12, this.kWeapon, 0, this.mGlobalLightSet);
 
     // parsing of actors can only begin after background has been parsed
     // to ensure proper support shadow
@@ -194,8 +216,8 @@ GameLevel_02.prototype.draw = function () {
 
     this.mCamera.setupViewProjection();
     gEngine.LayerManager.drawAllLayers(this.mCamera);
-
     this.mAllParticles.draw(this.mCamera);
+
 
     if (this.mShowPeek) {
         this.mPeekCam.setupViewProjection();
@@ -207,7 +229,7 @@ GameLevel_02.prototype.draw = function () {
 // anything from this function!
 GameLevel_02.prototype.update = function () {
     this.mCamera.update();  // to ensure proper interpolated movement effects
-    this.mAllParticles.update(this.mAllParticles);
+    
     gEngine.LayerManager.updateAllLayers();
     var xf = this.mIllumHero.getXform();
     var xpos = this.mIllumHero.getXform().getXPos();
@@ -253,13 +275,16 @@ GameLevel_02.prototype.update = function () {
         }
     }
      
-    var boss_Box = this.mBoss.getPhysicsComponent();
-    collided = this.mIllumHero.getJumpBox().collided(boss_Box, collisionInfo);
-    if (collided) {
-        this.pruebas.setText("Collision entre boss y heroe");
-        this.pruebas.getXform().setPosition(p[0], p[1]);
-    }
+    // var boss_Box = this.mBoss.getPhysicsComponent();
+    // collided = this.mIllumHero.getJumpBox().collided(boss_Box, collisionInfo);
+    // if (collided) {
+    //     this.pruebas.setText("Collision entre boss y heroe");
+    //     this.pruebas.getXform().setPosition(p[0], p[1]);
+    // }
 
+    this.mAllParticles.update();
+
+    // Logic for getWeapon
     var getWeapon;
     var weaponBox = this.mPowerUp.getPhysicsComponent();
     collided = this.mIllumHero
@@ -275,7 +300,54 @@ GameLevel_02.prototype.update = function () {
         getWeapon = false;
     }
 
+    //Collisions between hero and ChaseMinion
+    var arrM = this.mBoss.getMinions()
+    
+    for (var i = 0; i < arrM.length; i++) {
+        var boxCM=arrM[i].getPhysicsComponent()
 
+        collided= this.mIllumHero.getPhysicsComponent().collided(boxCM, collisionInfo);
+        if(collided){
+            this.mRestart = true;
+            gEngine.GameLoop.stop();
+        }
+    }
+
+    var openDoor = this.mIllumHero.canOpenDoor();
+    if (openDoor && xpos > 62) {
+        this.mAllDoors.getObjectAt(0).unlockDoor();
+    }
+    //Logic for collisions and boss durability 
+
+    if(getWeapon){
+        var projectiles = this.mIllumHero.getProjectiles();
+        var pf = null;
+        var i;
+        console.log(this.mBoss.getLife());
+        for(i=0; i<projectiles.size(); i++ ){
+            pf = projectiles.getObjectAt(i).getPhysicsComponent();
+            collided= this.mBoss.getPhysicsComponent().collided(pf, collisionInfo);
+            if(collided){
+                this.mBoss.setLife(100);    
+                let x = this.mBoss.getXform().getXPos();
+                let y = this.mBoss.getXform().getYPos();
+                this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
+
+                if(this.mBoss.getLife() <= 0){
+                    this.mIllumHero.setCanOpenDoor(true);     
+                     this.mCamera.shake(-2, -2, 20, 60);
+                    // let x = this.mBoss.getXform().getXPos();
+                    // let y = this.mBoss.getXform().getYPos();
+                    // this.mAllParticles.addEmitterAt([x, y], 2, this.createParticle);
+                    // // this.mIllumHero.setWeapon(false);
+                  
+                        }
+            }
+        }
+    
+    }
+    
+  
 };
 
 GameLevel_02.prototype._selectCharacter = function () {
@@ -298,6 +370,7 @@ GameLevel_02.prototype._physicsSimulation = function () {
     // Hero platform
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllPlatforms);
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllWalls);
+    gEngine.Physics.processObjSet(this.mIllumHero, this.mAllDoors);
     // Hero Minion
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllMinions);
 
@@ -312,5 +385,32 @@ GameLevel_02.prototype._physicsSimulation = function () {
 
     // Hero DyePack
     //gEngine.Physics.processObjSet(this.mHero, this.mAllDyePacks);
+};
+
+
+GameLevel_02.prototype.createParticle = function (atX, atY) {
+    var life = 30 + Math.random() * 200;
+    var p = new ParticleGameObject("assets/EMPPulse.png", atX, atY, life);
+    p.getRenderable().setColor([1, 0, 0, 1]);
+
+    // size of the particle
+    var r = 0.5 + Math.random() * 0.5;
+    p.getXform().setSize(r, r);
+
+    // final color
+    var fr = 3.5 + Math.random();
+    var fg = 0.4 + 0.1 * Math.random();
+    var fb = 0.3 + 0.1 * Math.random();
+    p.setFinalColor([fr, fg, fb, 0.6]);
+
+    // velocity on the particle
+    var fx = 10 * Math.random() - 20 * Math.random();
+    var fy = 10 * Math.random();
+    p.getPhysicsComponent().setVelocity([fx, fy]);
+
+    // size delta
+    p.setSizeDelta(0.98);
+
+    return p;
 };
 

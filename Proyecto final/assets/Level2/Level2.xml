@@ -47,14 +47,14 @@
     <Wall PosX="-4" PosY="17.5" />
     <Wall PosX="-4" PosY="22.5" />
     
-    <Wall PosX="64" PosY="2.5" />
+    <!-- <Wall PosX="64" PosY="2.5" /> -->
     <Wall PosX="64" PosY="7.5" />
-    <Wall PosX="64" PosY="12.5" />
+    <Wall PosX="64" PosY="12.5" /> -->
     <Wall PosX="64" PosY="17.5" />
-    <Wall PosX="64" PosY="22.5" />
-  
+
+    <Door PosX="64" PosY="3" />
     
-    <Boss PosX="40" PosY="9" Velocity="1 0 0" MovementRange="2" Type="0"/>
+    <Boss PosX="40" PosY="9" Velocity="1 0 0" MovementRange="4" Type="0"/>
        
     <!-- next level -->
     <NextLevel Next="Level1">

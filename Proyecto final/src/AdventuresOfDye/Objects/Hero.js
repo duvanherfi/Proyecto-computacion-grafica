@@ -90,20 +90,20 @@ Hero.prototype.update = function () {
         }
     }
 
-    var p = this.mProjectiles
-    var collisionInfo = new CollisionInfo();
-        for (var j = 0; j < p.size(); j++) {
-            var pBox = p.getObjectAt(j).getPhysicsComponent();
-            var collided = this.mboss
-                .getPhysicsComponent()
-                .collided(pBox, collisionInfo);
-            if (collided) {
-                this.mboss.set_life(10);
-                if(this.mboss.get_life() <= 0){
-                    gEngine.GameLoop.stop();
-                }
-            }
-        }
+    // var p = this.mProjectiles
+    // var collisionInfo = new CollisionInfo();
+    //     for (var j = 0; j < p.size(); j++) {
+    //         var pBox = p.getObjectAt(j).getPhysicsComponent();
+    //         var collided = this.mboss
+    //             .getPhysicsComponent()
+    //             .collided(pBox, collisionInfo);
+    //         if (collided) {
+    //             this.mboss.set_life(10);
+    //             if(this.mboss.get_life() <= 0){
+    //                 gEngine.GameLoop.stop();
+    //             }
+    //         }
+    //     }
 
     this.mJumpBox.setPosition(this.mDye.getXform().getXPos(), this.mDye.getXform().getYPos() - this.kHeight / 2);
 
