@@ -1,13 +1,23 @@
 "use strict";  // Operate in Strict mode such that variables must be declared before used!
 
-function GameLevel_03(level) {
+function GameLevel_03(level, time) {
     this.kHeroSprite = "assets/hero_sprite.png";
     this.kMinionSprite = "assets/minion_sprite.png";
     this.kPlatform = "assets/platform.png";
     this.kPlatformNormal = "assets/platform_normal.png";
     this.kWall = "assets/wall.png";
     this.kWallNormal = "assets/wall_normal.png";
+    this.kParticle = "assets/EMPPulse.png";
+    // Doors
+    this.kDoorTop = "assets/DoorInterior_Top.png";
+    this.kDoorBot = "assets/DoorInterior_Bottom.png";
+    this.kDoorSleeve = "assets/DoorFrame_AnimSheet.png";
 
+    this.kTnt = "assets/Level3/bomba.png"
+    this.kButton = "assets/DoorFrame_Button_180x100.png";
+
+    this.kLock = "assets/sounds/lock.mp3"
+    this.kOpen = "assets/sounds/open.mp3"
     // specifics to the level
     this.kLevelFile = "assets/" + level + "/" + level + ".xml";  // e.g., assets/Level1/Level1.xml
     this.kBg = "assets/" + level + "/bg.png";
@@ -15,18 +25,17 @@ function GameLevel_03(level) {
     this.kBgLayer = "assets/" + level + "/bgLayer.png";
     this.kBgLayerNormal = "assets/" + level + "/bgLayer_normal.png";
 
-    // The camera to view the scene
+   // The camera to view the scene
     this.mCamera = null;
     this.mPeekCam = null;
     this.mShowPeek = false;
-
-    this.mMsg = null;
-    this.mMatMsg = null;
-
+    this.t = time || new FontRenderable("30");
+    this.mMsg = time || new FontRenderable("30");
+    this.mRestart = false;
     // the hero and the support objects
-    this.mHero = null;
+    this.mplatform = null;
+    this.mTnt = null;
     this.mIllumHero = null;
-
     this.mGlobalLightSet = null;
 
     this.mThisLevel = level;
@@ -38,8 +47,8 @@ function GameLevel_03(level) {
     this.mAllPlatforms = new GameObjectSet();
     this.mAllWalls = new GameObjectSet();
     this.mAllMinions = new GameObjectSet();
-    this.mAllParticles = new ParticleGameObjectSet();    
     this.mAllDoors = new GameObjectSet();
+    this.mAllButtons = new GameObjectSet();
 }
 gEngine.Core.inheritPrototype(GameLevel_03, Scene);
 
@@ -49,13 +58,20 @@ GameLevel_03.prototype.loadScene = function () {
     gEngine.Textures.loadTexture(this.kMinionSprite);
     gEngine.Textures.loadTexture(this.kPlatform);
     gEngine.Textures.loadTexture(this.kPlatformNormal);
+    gEngine.Textures.loadTexture(this.kParticle);
     gEngine.Textures.loadTexture(this.kWall);
     gEngine.Textures.loadTexture(this.kWallNormal);
-
+    gEngine.Textures.loadTexture(this.kDoorTop);
+    gEngine.Textures.loadTexture(this.kDoorBot);
+    gEngine.Textures.loadTexture(this.kDoorSleeve);
     gEngine.Textures.loadTexture(this.kBg);
     gEngine.Textures.loadTexture(this.kBgNormal);
     gEngine.Textures.loadTexture(this.kBgLayer);
     gEngine.Textures.loadTexture(this.kBgLayerNormal);
+    gEngine.Textures.loadTexture(this.kTnt);
+    gEngine.Textures.loadTexture(this.kButton);
+    gEngine.AudioClips.loadAudio(this.kLock);
+    gEngine.AudioClips.loadAudio(this.kOpen);
 };
 
 GameLevel_03.prototype.unloadScene = function () {
@@ -65,17 +81,28 @@ GameLevel_03.prototype.unloadScene = function () {
     gEngine.Textures.unloadTexture(this.kHeroSprite);
     gEngine.Textures.unloadTexture(this.kMinionSprite);
     gEngine.Textures.unloadTexture(this.kPlatform);
+    gEngine.Textures.unloadTexture(this.kParticle);
     gEngine.Textures.unloadTexture(this.kPlatformNormal);
     gEngine.Textures.unloadTexture(this.kWall);
     gEngine.Textures.unloadTexture(this.kWallNormal);
-
+    gEngine.Textures.unloadTexture(this.kDoorTop);
+    gEngine.Textures.unloadTexture(this.kDoorBot);
+    gEngine.Textures.unloadTexture(this.kDoorSleeve);
     gEngine.Textures.unloadTexture(this.kBg);
     gEngine.Textures.unloadTexture(this.kBgNormal);
     gEngine.Textures.unloadTexture(this.kBgLayer);
     gEngine.Textures.unloadTexture(this.kBgLayerNormal);
-
-    var nextLevel = new GameLevel_03(this.mNextLevel);  // next level to be loaded
-    gEngine.Core.startScene(nextLevel);
+    gEngine.Textures.unloadTexture(this.kTnt);
+    gEngine.Textures.unloadTexture(this.kButton);
+    gEngine.AudioClips.unloadAudio(this.kOpen);
+    // next level to be loaded
+    if (this.mRestart === true) {
+        var nextLevel = new GameLevel_03("Level3", this.t); // next level to be loaded
+        gEngine.Core.startScene(nextLevel);
+    } else {
+        var nextLevel = new EndView(); // next level to be loaded
+        gEngine.Core.startScene(nextLevel);
+    }
 };
 
 GameLevel_03.prototype.initialize = function () {
@@ -87,8 +114,6 @@ GameLevel_03.prototype.initialize = function () {
     var parser = new SceneFileParser(this.kLevelFile);
     this.mCamera = parser.parseCamera();
     this.mGlobalLightSet = parser.parseLights();
-
-
 
     // parse background, needs the camera as a reference for parallax
     parser.parseBackground(this.mThisLevel, this.mCamera, this.mGlobalLightSet);
@@ -112,43 +137,50 @@ GameLevel_03.prototype.initialize = function () {
     for (i = 0; i < d.length; i++) {
         this.mAllDoors.addToSet(d[i]);
     }
+    
+    var b = parser.parseButtons(this.kButton, this.mGlobalLightSet);
+    for (i = 0; i < b.length; i++) {
+        this.mAllButtons.addToSet(b[i]);
+    }
 
     // parsing of actors can only begin after background has been parsed
     // to ensure proper support shadow
     // for now here is the hero
     this.mIllumHero = new Hero(this.kHeroSprite, null, 2, 6, this.mGlobalLightSet);
+    this.mplatform = new Platform(
+        30,
+        13,
+        [-1, 0, 0],
+        3,
+        this.kPlatform,
+        this.kPlatformNormal,
+        this.mGlobalLightSet
+    );
+    this.mAllPlatforms.addToSet(this.mplatform);
+    this.mTnt = new Tnt(        
+        this.mplatform.getXform().getXPos()+0.5,
+        14,
+        this.kTnt,
+        this.mGlobalLightSet
+    );
+    this.mMsg.setColor([1, 0, 0, 1]);
+    this.mMsg.getXform().setPosition(10, 16);
+    this.mMsg.setTextHeight(2);
+ 
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eHUD, this.mMsg);
     
-    this.mNextLevel = parser.parseNextLevel();
-
-    this.mMsg = new FontRenderable("Status Message");
-    this.mMsg.setColor([1, 1, 1, 1]);
-    this.mMsg.getXform().setPosition(-9.5, 4);
-    this.mMsg.setTextHeight(0.7);
-
-    this.mMatMsg = new FontRenderable("Status Message");
-    this.mMatMsg.setColor([1, 1, 1, 1]);
-    this.mMatMsg.getXform().setPosition(-9.5, 20);
-    this.mMatMsg.setTextHeight(0.7);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mMsg);
-    gEngine.LayerManager.addToLayer(gEngine.eLayer.eFront, this.mMatMsg);
-
-    // Add hero into the layer manager and as shadow caster
-    // Hero should be added into Actor layer last
-    // Hero can only be added as shadow caster after background is created
     gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mIllumHero);
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mTnt);
+    gEngine.LayerManager.addToLayer(gEngine.eLayer.eActors, this.mplatform);
+    gEngine.LayerManager.addAsShadowCaster(this.mplatform);
     gEngine.LayerManager.addAsShadowCaster(this.mIllumHero);
-
-
-    this.mSlectedCh = this.mIllumHero;
-    // this.mMaterialCh = this.mSlectedCh.getRenderable().getMaterial().getDiffuse();
-    this.mSelectedChMsg = "";
-
+    
     this.mPeekCam = new Camera(
-            vec2.fromValues(0, 0),
-            120,
-            [0, 0, 320, 180],
-            2
-            );
+        vec2.fromValues(0, 0),
+        120,
+        [0, 0, 320, 180],
+        2
+    );
     this.mShowPeek = false;
 };
 
@@ -160,9 +192,7 @@ GameLevel_03.prototype.draw = function () {
 
     this.mCamera.setupViewProjection();
     gEngine.LayerManager.drawAllLayers(this.mCamera);
-
-    this.mAllParticles.draw(this.mCamera);
-
+    this.mMsg.draw(this.mCamera); 
     if (this.mShowPeek) {
         this.mPeekCam.setupViewProjection();
         gEngine.LayerManager.drawAllLayers(this.mPeekCam);
@@ -173,22 +203,48 @@ GameLevel_03.prototype.draw = function () {
 // anything from this function!
 GameLevel_03.prototype.update = function () {
     this.mCamera.update();  // to ensure proper interpolated movement effects
-    this.mAllParticles.update(this.mAllParticles);
+
     gEngine.LayerManager.updateAllLayers();
 
+    var allUnlocked = false;
+    for (i = 0; i < this.mAllButtons.size(); i++) {
+        if (this.mAllButtons.getObjectAt(i).getButtonState() === true) {
+            allUnlocked = true;
+        } else {
+            allUnlocked = false;
+            break;
+        }
+    }
+    if(allUnlocked){
+        this.mTnt.deactivateTnt();        
+    }
+
+    //Implment about the timer (left function implement)
+    var ms = this.mMsg;
+    var v = parseInt(ms.getText(), 10);
+    if (v == 0) {
+        this.mRestart = true;
+        gEngine.GameLoop.stop();
+    } else {
+        setTimeout(function () {
+            v = v - 1;
+            ms.setText(String(v));
+            if(v <= 10){
+                this.mCamera.shake(-2, -2, 20, 30);
+            }
+        }, 1000);
+    }
+
     var xf = this.mIllumHero.getXform();
+    var xpos = this.mIllumHero.getXform().getXPos();
+    var ypos = this.mIllumHero.getXform().getYPos();
+
+    var xposplatform = this.mplatform.getXform().getXPos();
+    this.mTnt.getXform().setPosition(xposplatform+0.5, 14);
+    this.mMsg.getXform().setPosition(xpos, 16);
     this.mCamera.setWCCenter(xf.getXPos(), 8);
     var p = vec2.clone(xf.getPosition());
     this.mGlobalLightSet.getLightAt(this.mLgtIndex).set2DPosition(p);
-
-    // control the selected light
-//    var msg = "L=" + this.mLgtIndex + " ";
-//    msg += this._lightControl();
-//    this.mMsg.setText(msg);
-
-    // msg = this._selectCharacter();
-    // msg += this.materialControl();
-    this.mMatMsg.setText("P: to peek the entire level; L: to change level to: " + this.mNextLevel);
 
     if (this.mShowPeek) {
         this.mPeekCam.setWCCenter(p[0], p[1]);
@@ -200,14 +256,25 @@ GameLevel_03.prototype.update = function () {
     if (gEngine.Input.isKeyClicked(gEngine.Input.keys.L)) {
         gEngine.GameLoop.stop();
     }
-
+    
     // physics simulation
+    var collisionInfo = new CollisionInfo();
+
     this._physicsSimulation();
+    var heroPhysics = this.mIllumHero.getPhysicsComponent();
+    var tntPhysics = this.mTnt.getPhysicsComponent();  
+    collided = heroPhysics.collided(tntPhysics, collisionInfo);
+    if (collided) {
+        if(!this.mTnt.getTntState()){
+            this.mRestart = true;
+            gEngine.GameLoop.stop();
+        }
+    }
 
     var platBox;
     var i;
     var collided = false;
-    var collisionInfo = new CollisionInfo();
+    
     for (i = 0; i < this.mAllPlatforms.size(); i++) {
         var platBox = this.mAllPlatforms.getObjectAt(i).getPhysicsComponent();
         collided = this.mIllumHero.getJumpBox().collided(platBox, collisionInfo);
@@ -217,8 +284,29 @@ GameLevel_03.prototype.update = function () {
         }
     }
 
+    for (i = 0; i < this.mAllButtons.size(); i++) {
+        var boton = this.mAllButtons.getObjectAt(i)
+        var buttonBox = boton.getPhysicsComponent();
+        collided = this.mIllumHero.getPhysicsComponent().collided(buttonBox, collisionInfo);
+        if (!boton.getButtonState() && collided) {
+            boton.pressButton();
+            gEngine.AudioClips.playACue(this.kLock);            
+        }
+    }    
+    
+    var openDoor = this.mTnt.getTntState();
+    if (openDoor && xpos > 62) {
+        this.mAllDoors.getObjectAt(0).unlockDoor();
+        if(openDoor && !this.mIllumHero.canOpenDoor()){
+            this.mIllumHero.setCanOpenDoor(true);
+            gEngine.AudioClips.playACue(this.kOpen);
+        }    
+    }    
 
-
+    if (xpos > 65) {
+        this.mRestart = false;
+        gEngine.GameLoop.stop();
+    }
 };
 
 GameLevel_03.prototype._physicsSimulation = function () {
@@ -226,19 +314,34 @@ GameLevel_03.prototype._physicsSimulation = function () {
     // Hero platform
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllPlatforms);
     gEngine.Physics.processObjSet(this.mIllumHero, this.mAllWalls);
-    // Hero Minion
-    //gEngine.Physics.processObjSet(this.mHero, this.mAllMinions);
+    gEngine.Physics.processObjSet(this.mIllumHero, this.mAllDoors);
+    
+};
 
-    // Minion platform
-    gEngine.Physics.processSetSet(this.mAllMinions, this.mAllPlatforms);
 
-    // DyePack platform
-    //gEngine.Physics.processSetSet(this.mAllDyePacks, this.mAllPlatforms);
+GameLevel_03.prototype.createParticle = function (atX, atY) {
+    var life = 30 + Math.random() * 200;
+    var p = new ParticleGameObject("assets/EMPPulse.png", atX, atY, life);
+    p.getRenderable().setColor([1, 0, 0, 1]);
 
-    // DyePack Minions
-    //gEngine.Physics.processSetSet(this.mAllDyePacks, this.mAllMinions);
+    // size of the particle
+    var r = 0.5 + Math.random() * 0.5;
+    p.getXform().setSize(r, r);
 
-    // Hero DyePack
-    //gEngine.Physics.processObjSet(this.mHero, this.mAllDyePacks);
+    // final color
+    var fr = 3.5 + Math.random();
+    var fg = 0.4 + 0.1 * Math.random();
+    var fb = 0.3 + 0.1 * Math.random();
+    p.setFinalColor([fr, fg, fb, 0.6]);
+
+    // velocity on the particle
+    var fx = 10 * Math.random() - 20 * Math.random();
+    var fy = 10 * Math.random();
+    p.getPhysicsComponent().setVelocity([fx, fy]);
+
+    // size delta
+    p.setSizeDelta(0.98);
+
+    return p;
 };
 

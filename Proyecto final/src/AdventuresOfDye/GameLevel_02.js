@@ -38,8 +38,8 @@ function GameLevel_02(level, time) {
     this.mCamera = null;
     this.mPeekCam = null;
     this.mShowPeek = false;
-    this.t = time;
-    this.mMsg = time;
+    this.t = time || new FontRenderable("60");
+    this.mMsg = time || new FontRenderable("60");
     this.pruebas = null;
     this.mRestart = false;
     // the hero and the support objects
@@ -121,7 +121,7 @@ GameLevel_02.prototype.unloadScene = function () {
         var nextLevel = new GameLevel_02("Level2", this.t); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     } else {
-        var nextLevel = new GameLevel_03("Level3"); // next level to be loaded
+        var nextLevel = new GameLevel_03("Level3", this.mMsg); // next level to be loaded
         gEngine.Core.startScene(nextLevel);
     }
 };
@@ -226,7 +226,6 @@ GameLevel_02.prototype.draw = function () {
 // The Update function, updates the application state. Make sure to _NOT_ draw
 // anything from this function!
 GameLevel_02.prototype.update = function () {
-    console.log(this.mMsg.getText())
     this.mCamera.update();  // to ensure proper interpolated movement effects
 
     gEngine.LayerManager.updateAllLayers();
@@ -249,6 +248,7 @@ GameLevel_02.prototype.update = function () {
     var xpos = this.mIllumHero.getXform().getXPos();
     var ypos = this.mIllumHero.getXform().getYPos();
 
+    this.mMsg.getXform().setPosition(xpos, 16);
     this.mCamera.setWCCenter(xf.getXPos(), 8);
     var p = vec2.clone(xf.getPosition());
     this.mGlobalLightSet.getLightAt(this.mLgtIndex).set2DPosition(p);

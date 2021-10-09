@@ -76,8 +76,8 @@ Door.prototype._openDoor = function () {
     var topY = this.mDoorTop.getXform().getYPos();
     var botY = this.mDoorBot.getXform().getYPos();
 
-    if (Math.abs(this.mTopInitialYPosition - topY) <= this.kHeight 
-            || Math.abs(this.mBotInitialYPosition - botY) <= this.kHeight) {
+    if (Math.abs(this.mTopInitialYPosition - topY) <= this.kHeight
+        || Math.abs(this.mBotInitialYPosition - botY) <= this.kHeight) {
         this.mDoorTop.getXform().setYPos(topY + 0.01);
         this.mDoorTop.setElementPixelPositions(64, 128, 0, 128);
 
@@ -87,12 +87,12 @@ Door.prototype._openDoor = function () {
         this.mDoorTopSleeve.setElementPixelPositions(128, 256, 212, 512);
         this.mDoorBotSleeve.setElementPixelPositions(128, 256, 0, 300);
     }
-    
+
 
 
 };
 
 
-    Door.prototype.unlockDoor = function () {
-        this.mIsOpen = true;
-    };
+Door.prototype.unlockDoor = function () {
+    this.mIsOpen = true;
+};
